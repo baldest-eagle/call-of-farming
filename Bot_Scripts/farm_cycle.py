@@ -10,9 +10,9 @@ Workflow (6 steps):
      (bypasses trial-end pop-up cascade entirely)
   2. Launch GnBots
   3. Find the GnBots window
-  4. Move to second monitor
-  5. Click Start (GnBots auto-launches LDPlayer)
-  6. Click First (GnBots starts farming)
+  4. Click Start (GnBots auto-launches LDPlayer)
+  5. Wait for popup, then press Enter to confirm 'First'
+  6. Move all windows to secondary monitor
 
 That's it — exit. GnBots handles the 2-hour farming run on its own.
 Task Scheduler triggers the next cycle, which kills everything and starts fresh.
@@ -34,16 +34,8 @@ from pathlib import Path
 from datetime import datetime
 import ctypes
 
-# ──────────────────────────────────────────────────────────────
-#  DPI Awareness Initialization
-# ──────────────────────────────────────────────────────────────
-try:
-    ctypes.windll.shcore.SetProcessDpiAwareness(2) # 2 = PROCESS_PER_MONITOR_DPI_AWARE
-except Exception:
-    try:
-        ctypes.windll.user32.SetProcessDPIAware()
-    except Exception:
-        pass
+# Note: DPI awareness is initialized in config.py at import time.
+# No need to call SetProcessDpiAwareness again here.
 
 import win32gui
 import win32con
@@ -58,7 +50,6 @@ from config import (
     GNBOTS_TITLE,
     TEMPLATE_DIR,
     TEMPLATE_START,
-    TEMPLATE_FIRST,
     TEMPLATE_CONTINUE,
     SCREENSHOT_DIR,
     LOG_FILE,
@@ -312,7 +303,6 @@ def run_cycle() -> bool:
         # ── STEP 4: Click Start ─────────────────────────────────
         # Click on the primary monitor where SendInput works reliably.
         logger.info("[STEP 4/6] Clicking Start button (also launches LDPlayer)...")
-
         # First, try to dismiss any "Continue" dialog if present
         continue_template_path = Path(TEMPLATE_DIR) / TEMPLATE_CONTINUE
         if continue_template_path.exists():
@@ -345,7 +335,7 @@ def run_cycle() -> bool:
 
         bot.save_capture(f"{ts}_02_after_start.png", str(screenshot_dir))
 
-        # ── STEP 5 & 6: Wait 1s then press Enter ────────────────
+        # ── STEP 5: Wait for popup then press Enter ────────────
         # The popup "Start with first or continue" opens automatically and
         # defaults to "First" highlighted. Since GnBots is already on the
         # secondary monitor, the popup inherits focus naturally.
@@ -353,15 +343,16 @@ def run_cycle() -> bool:
         logger.info("[STEP 5/6] Waiting 3s for popup to open...")
         time.sleep(3.0)
 
-        logger.info("[STEP 6/6] Pressing Enter to confirm 'First'...")
+        logger.info("[STEP 5/6] Pressing Enter to confirm 'First'...")
         VK_RETURN = 0x0D
         ctypes.windll.user32.keybd_event(VK_RETURN, 0, 0, 0)       # key down
         time.sleep(0.05)
         ctypes.windll.user32.keybd_event(VK_RETURN, 0, 0x0002, 0)  # key up
         logger.info("  Enter sent. 'First' confirmed.")
 
-        # Move everything to secondary monitor AFTER Enter — focus is no longer needed
-        logger.info("[STEP 6b] Moving all windows to secondary monitor...")
+        # ── STEP 6: Move everything to secondary monitor ─────────
+        # Move AFTER Enter — focus is no longer needed
+        logger.info("[STEP 6/6] Moving all windows to secondary monitor...")
         move_all_project_windows(MONITOR2_X, MONITOR2_Y)
 
         logger.info("GnBots is now farming on its own.")

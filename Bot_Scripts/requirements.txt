@@ -1,8 +1,6 @@
 psutil
 opencv-python
-pure-python-adb
 pyautogui
 pywin32
 numpy
-pywinauto
 win10toast ; sys_platform == 'win32'

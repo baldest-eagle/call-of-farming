@@ -8,10 +8,46 @@ import logging
 import urllib.request
 import urllib.error
 from datetime import datetime
+from urllib.parse import urlparse
 
 from config import NOTIFICATIONS
 
 logger = logging.getLogger("FarmBot.Notifier")
+
+
+def _validate_webhook_url(url: str) -> bool:
+    """Validate that a webhook URL is well-formed and uses HTTPS.
+    
+    Returns True if valid, False otherwise. Logs specific issues found.
+    """
+    if not url:
+        return False
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        logger.error(f"Webhook URL is not a valid URL: {url}")
+        return False
+
+    if parsed.scheme != "https":
+        logger.error(
+            f"Webhook URL must use HTTPS, got '{parsed.scheme}'. "
+            f"URL: {url}"
+        )
+        return False
+
+    if not parsed.netloc:
+        logger.error(f"Webhook URL has no host: {url}")
+        return False
+
+    # Warn about known good domains — anything else might be a typo
+    known_domains = ["discord.com", "discordapp.com", "hooks.slack.com", "slack.com"]
+    if not any(domain in parsed.netloc for domain in known_domains):
+        logger.warning(
+            f"Webhook URL domain '{parsed.netloc}' is not a known "
+            f"Discord/Slack domain. Verify this is correct: {url}"
+        )
+
+    return True
 
 
 def send(event: str, message: str = "") -> None:
@@ -27,7 +63,10 @@ def send(event: str, message: str = "") -> None:
 
     # ── Webhook (Discord / Slack / custom) ──
     if NOTIFICATIONS.get("webhook_enabled") and NOTIFICATIONS.get("webhook_url"):
-        _send_webhook(title, body, timestamp)
+        if _validate_webhook_url(NOTIFICATIONS["webhook_url"]):
+            _send_webhook(title, body, timestamp)
+        else:
+            logger.warning("Webhook URL validation failed — skipping webhook notification.")
 
     # ── Desktop toast ──
     if NOTIFICATIONS.get("desktop_enabled"):

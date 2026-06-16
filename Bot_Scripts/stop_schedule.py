@@ -3,11 +3,9 @@ import sys
 import subprocess
 from pathlib import Path
 
-def is_admin() -> bool:
-    try:
-        return ctypes.windll.shell32.IsUserAnAdmin() != 0
-    except Exception:
-        return False
+# Import from the project's process_manager instead of duplicating
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from process_manager import is_admin
 
 def elevate_and_run():
     if is_admin():

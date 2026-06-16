@@ -97,21 +97,43 @@ class WindowBot:
         return False
 
     def _find_window_partial(self, partial_title: str) -> Optional[int]:
-        """Enumerate windows looking for a partial title match (case-insensitive)."""
+        """Enumerate windows looking for a partial title match (case-insensitive).
+        
+        If multiple windows match, prefers the one that looks like a main
+        application window (largest, with a title bar) over tooltips, 
+        shadows, or dialogs.
+        """
         results = []
         search = partial_title.lower()
 
         def callback(hwnd, _):
             if win32gui.IsWindowVisible(hwnd):
-                title = win32gui.GetWindowText(hwnd).lower()
-                if search in title:
-                    results.append(hwnd)
+                title = win32gui.GetWindowText(hwnd)
+                if search in title.lower():
+                    # Gather info to rank candidates
+                    try:
+                        rect = win32gui.GetWindowRect(hwnd)
+                        area = (rect[2] - rect[0]) * (rect[3] - rect[1])
+                        classname = win32gui.GetClassName(hwnd)
+                    except Exception:
+                        area = 0
+                        classname = ""
+                    # Skip tooltip and shadow windows — they're not the main window
+                    if any(cls in classname.lower() for cls in ["tooltip", "shadow", "broadcast"]):
+                        return
+                    results.append((hwnd, area, title))
 
         try:
             win32gui.EnumWindows(callback, None)
         except Exception:
             pass
-        return results[0] if results else None
+
+        if not results:
+            return None
+
+        # Return the largest window (most likely the main app window)
+        results.sort(key=lambda r: r[1], reverse=True)
+        return results[0][0]
 
     @property
     def hwnd(self) -> int:
@@ -230,7 +252,13 @@ class WindowBot:
         return None
 
     def _capture_pyautogui(self) -> Optional[np.ndarray]:
-        """Capture via pyautogui — requires window to be visible on screen."""
+        """Capture via pyautogui — requires window to be visible on screen.
+        
+        Note: On high-DPI displays, win32gui returns physical (unscaled) pixel
+        coordinates while pyautogui may use logical (DPI-scaled) coordinates.
+        We detect and correct for this mismatch by comparing the screenshot
+        dimensions to the reported window rect dimensions.
+        """
         try:
             rect = self.get_window_rect()
             left, top, right, bottom = rect
@@ -242,6 +270,29 @@ class WindowBot:
             screenshot = pyautogui.screenshot(region=(left, top, width, height))
             img = np.array(screenshot)
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+            # DPI mismatch detection: if pyautogui returns a screenshot that is
+            # smaller than the physical window size, the coordinates are likely
+            # in logical (scaled) pixels. Scale the capture region accordingly.
+            if img.shape[0] < height * 0.8 or img.shape[1] < width * 0.8:
+                scale_x = img.shape[1] / width if width > 0 else 1.0
+                scale_y = img.shape[0] / height if height > 0 else 1.0
+                logger.debug(
+                    f"DPI mismatch detected: window={width}x{height}, "
+                    f"capture={img.shape[1]}x{img.shape[0]}, "
+                    f"scale=({scale_x:.2f}, {scale_y:.2f}). "
+                    f"Recapturing with scaled coordinates..."
+                )
+                scaled_left = int(left * scale_x)
+                scaled_top = int(top * scale_y)
+                scaled_width = int(width * scale_x)
+                scaled_height = int(height * scale_y)
+                screenshot = pyautogui.screenshot(
+                    region=(scaled_left, scaled_top, scaled_width, scaled_height)
+                )
+                img = np.array(screenshot)
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
             logger.debug(f"pyautogui capture: {width}x{height} at ({left},{top})")
             return img
         except Exception as e:
@@ -250,14 +301,19 @@ class WindowBot:
 
     def _capture_printwindow(self) -> Optional[np.ndarray]:
         """Capture via PrintWindow Win32 API — works even if window is obscured."""
-        try:
-            hwnd = self.hwnd
-            rect = win32gui.GetWindowRect(hwnd)
-            w = rect[2] - rect[0]
-            h = rect[3] - rect[1]
-            if w <= 0 or h <= 0:
-                return None
+        hwnd = self.hwnd
+        rect = win32gui.GetWindowRect(hwnd)
+        w = rect[2] - rect[0]
+        h = rect[3] - rect[1]
+        if w <= 0 or h <= 0:
+            return None
 
+        wDC = None
+        dcObj = None
+        cDC = None
+        bmp = None
+
+        try:
             wDC = win32gui.GetWindowDC(hwnd)
             dcObj = win32ui.CreateDCFromHandle(wDC)
             cDC = dcObj.CreateCompatibleDC()
@@ -275,17 +331,33 @@ class WindowBot:
             )
             img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
-            # Cleanup
-            dcObj.DeleteDC()
-            cDC.DeleteDC()
-            win32gui.ReleaseDC(hwnd, wDC)
-            win32gui.DeleteObject(bmp.GetHandle())
-
             logger.debug(f"PrintWindow capture: {w}x{h}")
             return img
         except Exception as e:
             logger.debug(f"PrintWindow capture failed: {e}")
             return None
+        finally:
+            # Always clean up GDI resources to prevent leaks
+            try:
+                if dcObj:
+                    dcObj.DeleteDC()
+            except Exception:
+                pass
+            try:
+                if cDC:
+                    cDC.DeleteDC()
+            except Exception:
+                pass
+            try:
+                if wDC and hwnd:
+                    win32gui.ReleaseDC(hwnd, wDC)
+            except Exception:
+                pass
+            try:
+                if bmp:
+                    win32gui.DeleteObject(bmp.GetHandle())
+            except Exception:
+                pass
 
     # ── Template Matching ────────────────────────────────────────
 
@@ -619,6 +691,10 @@ class WindowBot:
         In normal mode:
           Primary: Win32 click (moves the mouse, supports all monitors).
           Backup: PostMessage sent as belt-and-suspenders.
+
+        Safety: BlockInput is used to prevent the user from accidentally
+        moving the mouse during a click. A safety thread ensures BlockInput
+        is released after a maximum of 2 seconds even if the process crashes.
         """
         if self.headless and not force_pyautogui:
             # ── HEADLESS: PostMessage first (no mouse movement) ──
@@ -630,51 +706,79 @@ class WindowBot:
             # PostMessage threw an error — fall back to Win32 click (will move mouse)
             logger.warning("PostMessage click failed in headless mode, falling back to Win32 click (will move mouse)")
             try:
-                import ctypes
-                ctypes.windll.user32.BlockInput(True)
+                self._safe_block_input(True)
                 try:
                     self._win32_sendinput_click(x, y)
                     logger.debug(f"Fallback Win32 click({x}, {y})")
                 finally:
-                    ctypes.windll.user32.BlockInput(False)
+                    self._safe_block_input(False)
                 return True
             except Exception as e:
                 logger.error(f"Fallback Win32 click also failed: {e}")
+                self._safe_block_input(False)
                 return False
 
         if self.headless and force_pyautogui:
             # PostMessage click didn't register (screen didn't change) — use Win32 click
             logger.info("PostMessage click not verified — retrying with Win32 click (mouse will move)")
             try:
-                import ctypes
-                ctypes.windll.user32.BlockInput(True)
+                self._safe_block_input(True)
                 try:
                     self._win32_sendinput_click(x, y)
                     logger.debug(f"Force-Win32 click({x}, {y})")
                 finally:
-                    ctypes.windll.user32.BlockInput(False)
+                    self._safe_block_input(False)
                 return True
             except Exception as e:
                 logger.error(f"Win32 click failed: {e}")
+                self._safe_block_input(False)
                 return False
 
         # ── NORMAL: Win32 click first (moves mouse), PostMessage backup ──
         try:
-            import ctypes
-            ctypes.windll.user32.BlockInput(True)
+            self._safe_block_input(True)
             try:
                 self._win32_sendinput_click(x, y)
                 logger.debug(f"Win32 SendInput click({x}, {y})")
             except Exception as e2:
                 logger.warning(f"Win32 click failed: {e2}")
             finally:
-                ctypes.windll.user32.BlockInput(False)
+                self._safe_block_input(False)
         except Exception as e:
             logger.warning(f"Win32 BlockInput failed: {e}")
+            # Still unblock just in case
+            self._safe_block_input(False)
 
         # Also send PostMessage as backup
         self._postmessage_click(x, y)
         return True
+
+    def _safe_block_input(self, block: bool) -> None:
+        """Block/unblock user input with a safety timeout.
+        
+        If block=True, starts a background thread that will automatically
+        unblock input after 2 seconds, in case the process crashes or
+        gets stuck while input is blocked.
+        """
+        import ctypes
+        import threading
+
+        if block:
+            ctypes.windll.user32.BlockInput(True)
+            # Safety net: auto-unblock after 2 seconds no matter what
+            def _safety_unblock():
+                time.sleep(2.0)
+                try:
+                    ctypes.windll.user32.BlockInput(False)
+                except Exception:
+                    pass
+            t = threading.Thread(target=_safety_unblock, daemon=True)
+            t.start()
+        else:
+            try:
+                ctypes.windll.user32.BlockInput(False)
+            except Exception:
+                pass
 
     def _postmessage_click(self, screen_x: int, screen_y: int) -> bool:
         """
@@ -697,7 +801,11 @@ class WindowBot:
             local_x = pt.x
             local_y = pt.y
             
-            lParam = (local_y << 16) | (local_x & 0xFFFF)
+            # Pack coordinates into lParam as signed 16-bit values.
+            # struct.pack('hh', ...) correctly handles two's-complement for
+            # negative coordinates (e.g. windows on a secondary monitor to the left).
+            import struct as _struct
+            lParam = _struct.unpack('L', _struct.pack('hh', local_x, local_y))[0]
             
             # Send WM_MOUSEMOVE to trigger hover states first, then click
             windll.user32.PostMessageW(hwnd, win32con.WM_MOUSEMOVE, 0, lParam)
@@ -820,7 +928,12 @@ class WindowBot:
         return False
 
     def get_template_confidence_report(self, template_filename: str) -> dict:
-        """Capture current window and return confidence info for a template."""
+        """Capture current window and return confidence info for a template.
+        
+        Uses multi-scale matching (if enabled) to match the behavior of
+        find_template(), so diagnostic confidence scores are consistent
+        with what the bot actually sees during automation.
+        """
         screenshot = self.capture_window_region()
         template = self._load_template(template_filename)
         if screenshot is None or template is None:
@@ -836,17 +949,46 @@ class WindowBot:
                 "best_confidence": 0.0,
             }
 
-        result = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
-        _, max_val, _, max_loc = cv2.minMaxLoc(result)
-        h, w = template.shape[:2]
+        # Use multi-scale matching to be consistent with find_template()
+        best_val = 0.0
+        best_loc = (0, 0)
+        best_scale = 1.0
+        best_h, best_w = template.shape[:2]
+        scales_to_try = self.scales if self.multi_scale else [1.0]
+
+        for scale in scales_to_try:
+            if scale != 1.0:
+                new_w = int(template.shape[1] * scale)
+                new_h = int(template.shape[0] * scale)
+                if new_w <= 0 or new_h <= 0:
+                    continue
+                if new_w > screenshot.shape[1] or new_h > screenshot.shape[0]:
+                    continue
+                scaled_template = cv2.resize(template, (new_w, new_h), interpolation=cv2.INTER_AREA)
+            else:
+                scaled_template = template
+
+            if (scaled_template.shape[0] > screenshot.shape[0] or
+                    scaled_template.shape[1] > screenshot.shape[1]):
+                continue
+
+            result = cv2.matchTemplate(screenshot, scaled_template, cv2.TM_CCOEFF_NORMED)
+            _, max_val, _, max_loc = cv2.minMaxLoc(result)
+
+            if max_val > best_val:
+                best_val = max_val
+                best_loc = max_loc
+                best_scale = scale
+                best_h, best_w = scaled_template.shape[:2]
 
         return {
             "template": template_filename,
-            "template_size": f"{w}x{h}",
+            "template_size": f"{template.shape[1]}x{template.shape[0]}",
             "screenshot_size": f"{screenshot.shape[1]}x{screenshot.shape[0]}",
-            "best_confidence": round(float(max_val), 4),
+            "best_confidence": round(float(best_val), 4),
+            "best_scale": round(float(best_scale), 2),
             "threshold": self.threshold,
-            "above_threshold": max_val >= self.threshold,
-            "above_fallback": max_val >= self.fallback_threshold,
-            "best_location": f"({max_loc[0] + w//2}, {max_loc[1] + h//2})",
+            "above_threshold": best_val >= self.threshold,
+            "above_fallback": best_val >= self.fallback_threshold,
+            "best_location": f"({best_loc[0] + best_w//2}, {best_loc[1] + best_h//2})",
         }

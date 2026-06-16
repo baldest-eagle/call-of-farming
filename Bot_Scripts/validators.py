@@ -56,8 +56,10 @@ def validate_all() -> list:
         issues.append(f"Template directory does not exist: {TEMPLATE_DIR}")
         logger.error(f"VALIDATION: Template dir missing: {TEMPLATE_DIR}")
     else:
-        required_templates = [TEMPLATE_START, TEMPLATE_FIRST]
-        optional_templates = [TEMPLATE_CONTINUE]
+        # TEMPLATE_FIRST is no longer required — the farm cycle presses Enter
+        # instead of clicking the First button. Kept as optional for diagnostic use.
+        required_templates = [TEMPLATE_START]
+        optional_templates = [TEMPLATE_FIRST, TEMPLATE_CONTINUE]
 
         for tpl in required_templates:
             tpl_path = template_dir / tpl

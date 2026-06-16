@@ -1,5 +1,6 @@
 import ctypes
 import sys
+import os
 import subprocess
 from pathlib import Path
 
@@ -28,9 +29,20 @@ def elevate_and_run():
 def main():
     print("Running as admin. Creating scheduled task...")
     
-    # Python executable and script path
-    python_exe = r"C:\Users\kyleh\AppData\Local\Programs\Python\Python312\pythonw.exe"
-    script_path = r"C:\Users\kyleh\.gemini\BotProject\farm_cycle.py"
+    # Auto-detect paths relative to this script's location
+    project_dir = Path(__file__).resolve().parent
+    
+    # Find pythonw.exe in the same Python installation that's running this script
+    python_exe = Path(sys.executable).parent / "pythonw.exe"
+    if not python_exe.exists():
+        # Fallback: use python.exe if pythonw.exe is not available
+        python_exe = Path(sys.executable)
+        print(f"WARNING: pythonw.exe not found, using {python_exe}")
+    
+    script_path = project_dir / "farm_cycle.py"
+    if not script_path.exists():
+        print(f"ERROR: farm_cycle.py not found at {script_path}")
+        sys.exit(1)
     
     # 3 hours interval
     start_time = "16:20"
@@ -48,6 +60,9 @@ def main():
         subprocess.run(f'schtasks /Delete /TN "{task_name}" /F', shell=True, capture_output=True)
     
     # Create new task
+    print(f"Project dir:  {project_dir}")
+    print(f"Python exe:   {python_exe}")
+    print(f"Script path:  {script_path}")
     print(f"Executing: {create_cmd}")
     res = subprocess.run(create_cmd, shell=True, capture_output=True, text=True)
     

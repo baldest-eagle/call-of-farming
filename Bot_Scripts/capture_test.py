@@ -5,7 +5,18 @@ Make sure GnBots is open first.
 """
 
 import sys
+import ctypes
 from pathlib import Path
+
+# Initialize DPI Awareness so coordinates match physical screen pixels.
+# Must be done before any window-related imports or operations.
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(2)  # PROCESS_PER_MONITOR_DPI_AWARE
+except Exception:
+    try:
+        ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        pass
 
 import win32gui
 import win32ui
@@ -40,31 +51,52 @@ def capture_printwindow(hwnd: int) -> np.ndarray:
     w = rect[2] - rect[0]
     h = rect[3] - rect[1]
 
-    wDC = win32gui.GetWindowDC(hwnd)
-    dcObj = win32ui.CreateDCFromHandle(wDC)
-    cDC = dcObj.CreateCompatibleDC()
-    bmp = win32ui.CreateBitmap()
-    bmp.CreateCompatibleBitmap(dcObj, w, h)
-    cDC.SelectObject(bmp)
+    wDC = None
+    dcObj = None
+    cDC = None
+    bmp = None
 
-    # PW_RENDERFULLCONTENT = 2 — captures even hardware-accelerated content
-    windll.user32.PrintWindow(hwnd, cDC.GetSafeHdc(), 2)
+    try:
+        wDC = win32gui.GetWindowDC(hwnd)
+        dcObj = win32ui.CreateDCFromHandle(wDC)
+        cDC = dcObj.CreateCompatibleDC()
+        bmp = win32ui.CreateBitmap()
+        bmp.CreateCompatibleBitmap(dcObj, w, h)
+        cDC.SelectObject(bmp)
 
-    # Convert to numpy
-    bmpinfo = bmp.GetInfo()
-    bmpstr = bmp.GetBitmapBits(True)
-    img = np.frombuffer(bmpstr, dtype=np.uint8).reshape(
-        bmpinfo['bmHeight'], bmpinfo['bmWidth'], 4
-    )
-    img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+        # PW_RENDERFULLCONTENT = 2 — captures even hardware-accelerated content
+        windll.user32.PrintWindow(hwnd, cDC.GetSafeHdc(), 2)
 
-    # Cleanup
-    dcObj.DeleteDC()
-    cDC.DeleteDC()
-    win32gui.ReleaseDC(hwnd, wDC)
-    win32gui.DeleteObject(bmp.GetHandle())
-
-    return img
+        # Convert to numpy
+        bmpinfo = bmp.GetInfo()
+        bmpstr = bmp.GetBitmapBits(True)
+        img = np.frombuffer(bmpstr, dtype=np.uint8).reshape(
+            bmpinfo['bmHeight'], bmpinfo['bmWidth'], 4
+        )
+        img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+        return img
+    finally:
+        # Always clean up GDI resources to prevent leaks
+        try:
+            if dcObj:
+                dcObj.DeleteDC()
+        except Exception:
+            pass
+        try:
+            if cDC:
+                cDC.DeleteDC()
+        except Exception:
+            pass
+        try:
+            if wDC and hwnd:
+                win32gui.ReleaseDC(hwnd, wDC)
+        except Exception:
+            pass
+        try:
+            if bmp:
+                win32gui.DeleteObject(bmp.GetHandle())
+        except Exception:
+            pass
 
 
 def main():
