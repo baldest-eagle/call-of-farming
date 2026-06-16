@@ -1,0 +1,22 @@
+[
+  {
+    "template": "first_btn.png",
+    "template_size": "144x56",
+    "screenshot_size": "950x600",
+    "best_confidence": 0.0,
+    "threshold": 0.75,
+    "above_threshold": false,
+    "above_fallback": false,
+    "best_location": "(72, 28)"
+  },
+  {
+    "template": "start_btn.png",
+    "template_size": "86x42",
+    "screenshot_size": "950x600",
+    "best_confidence": 0.0,
+    "threshold": 0.75,
+    "above_threshold": false,
+    "above_fallback": false,
+    "best_location": "(43, 21)"
+  }
+]

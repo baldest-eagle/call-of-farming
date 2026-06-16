@@ -1,0 +1,3 @@
+invalid type: string "togui capture: 950x600 at (0,0)\n2026-06-04 12:15:54 | INFO     | FarmBot.WindowBot      | Clicked 'start_btn.png' at screen (311,565) [unverified]\n2026-06-04 12:15:54 | INFO     | FarmBot                | Start clicked. Waiting for LDPlayer to boot...\n2026-06-04 12:15:54 | DEBUG    | FarmBot.WindowBot      | pyautogui capture: 950x600 at (0,0)\net processes were running.\nkyleh\Desktop\GnBots_Assets_Copy\BotProject\templates\continue_btn.png
+2026-06-01 10:36:25 | INFO     | FarmBot.WindowBot      | Attempt 2/2: 'continue_btn.png' not found (threshold=0.60).
+2026-06-01 10:36:25 | ERROR    | FarmBot.WindowBot      | Failed to find and click 'continu
