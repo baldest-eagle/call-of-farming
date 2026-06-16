@@ -65,6 +65,9 @@ from config import (
     LOG_BACKUP_COUNT,
     HEADLESS,
     VERIFY_CLICK,
+    GHOST_MODE,
+    GHOST_ALPHA,
+    GHOST_WHEN,
 )
 from process_manager import (
     kill_all_targets,
@@ -156,6 +159,45 @@ def move_all_project_windows(x: int, y: int) -> None:
         win32gui.EnumWindows(enum_callback, None)
     except Exception as e:
         logger.error(f"Error enumerating windows: {e}")
+
+
+def ghost_all_project_windows(alpha: int = 0) -> None:
+    """Make all project windows (GnBots, LDPlayer, game) transparent.
+    
+    Uses SetLayeredWindowAttributes via Win32 API. The windows still
+    exist and render normally — they're just not visible on screen.
+    PrintWindow captures still work at alpha=0.
+    """
+    logger = logging.getLogger("FarmBot")
+    target_processes = ["gnbots.exe", "dnplayer.exe", "callofdragons.exe"]
+    import ctypes
+
+    def ghost_callback(hwnd, _):
+        if win32gui.IsWindowVisible(hwnd):
+            try:
+                _, pid = win32process.GetWindowThreadProcessId(hwnd)
+                proc = psutil.Process(pid)
+                pname = proc.name().lower()
+                if pname in target_processes:
+                    # Add WS_EX_LAYERED and set alpha
+                    style = ctypes.windll.user32.GetWindowLongW(hwnd, -20)
+                    new_style = style | 0x80000  # WS_EX_LAYERED
+                    ctypes.windll.user32.SetWindowLongW(hwnd, -20, new_style)
+                    result = ctypes.windll.user32.SetLayeredWindowAttributes(
+                        hwnd, 0, alpha, 0x02
+                    )
+                    title = win32gui.GetWindowText(hwnd)
+                    if result:
+                        logger.info(f"Ghost Mode: '{title}' (Proc: {pname}) set to alpha={alpha}")
+                    else:
+                        logger.warning(f"Ghost Mode: Failed for '{title}' (Proc: {pname})")
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+
+    try:
+        win32gui.EnumWindows(ghost_callback, None)
+    except Exception as e:
+        logger.error(f"Error applying Ghost Mode: {e}")
 
 
 # ──────────────────────────────────────────────────────────────
@@ -255,6 +297,8 @@ def run_cycle() -> bool:
     logger.info(f"  Admin: {is_admin()}")
     logger.info(f"  Headless: {HEADLESS} ({'no mouse movement' if HEADLESS else 'mouse will move'})")
     logger.info(f"  Verify clicks: {VERIFY_CLICK}")
+    logger.info(f"  Ghost Mode: {GHOST_MODE} (alpha={GHOST_ALPHA}, when={GHOST_WHEN})")
+    logger.info(f"  Target monitor: ({MONITOR2_X}, {MONITOR2_Y})")
     logger.info("=" * 60)
 
     notify("cycle_start", "Farm cycle starting")
@@ -303,6 +347,13 @@ def run_cycle() -> bool:
         # ── STEP 4: Click Start ─────────────────────────────────
         # Click on the primary monitor where SendInput works reliably.
         logger.info("[STEP 4/6] Clicking Start button (also launches LDPlayer)...")
+
+        # Ghost Mode check: warn if enabled without headless
+        if GHOST_MODE and not HEADLESS:
+            logger.warning(
+                "Ghost Mode requires HEADLESS=True for PostMessage clicks and "
+                "PrintWindow captures. Disabling Ghost Mode."
+            )
         # First, try to dismiss any "Continue" dialog if present
         continue_template_path = Path(TEMPLATE_DIR) / TEMPLATE_CONTINUE
         if continue_template_path.exists():
@@ -335,6 +386,11 @@ def run_cycle() -> bool:
 
         bot.save_capture(f"{ts}_02_after_start.png", str(screenshot_dir))
 
+        # Ghost Mode: apply after Start click (before popup)
+        if GHOST_MODE and HEADLESS and GHOST_WHEN == "after_start":
+            logger.info("[GHOST] Making GnBots invisible (after_start)...")
+            bot.make_transparent(GHOST_ALPHA)
+
         # ── STEP 5: Wait for popup then press Enter ────────────
         # The popup "Start with first or continue" opens automatically and
         # defaults to "First" highlighted. Since GnBots is already on the
@@ -350,10 +406,20 @@ def run_cycle() -> bool:
         ctypes.windll.user32.keybd_event(VK_RETURN, 0, 0x0002, 0)  # key up
         logger.info("  Enter sent. 'First' confirmed.")
 
+        # Ghost Mode: apply after Enter (most common — all clicks done)
+        if GHOST_MODE and HEADLESS and GHOST_WHEN == "after_enter":
+            logger.info("[GHOST] Making all project windows invisible (after_enter)...")
+            ghost_all_project_windows(GHOST_ALPHA)
+
         # ── STEP 6: Move everything to secondary monitor ─────────
         # Move AFTER Enter — focus is no longer needed
         logger.info("[STEP 6/6] Moving all windows to secondary monitor...")
         move_all_project_windows(MONITOR2_X, MONITOR2_Y)
+
+        # Ghost Mode: apply after moving (if configured)
+        if GHOST_MODE and HEADLESS and GHOST_WHEN == "after_move":
+            logger.info("[GHOST] Making all project windows invisible (after_move)...")
+            ghost_all_project_windows(GHOST_ALPHA)
 
         logger.info("GnBots is now farming on its own.")
         bot.save_capture(f"{ts}_03_running.png", str(screenshot_dir))

@@ -87,16 +87,38 @@ import win32con
 def get_opposite_monitor_coords():
     """Detect and return the top-left coordinates of the opposite (secondary) monitor.
     
+    If VDD_PREFER is True, prefer virtual displays over physical ones.
     Defaults to (0, 0) if only one monitor is present.
     """
     try:
         monitors = win32api.EnumDisplayMonitors()
         if len(monitors) > 1:
+            virtual_coords = None
+            physical_coords = None
+            
             for hMonitor, _, rect in monitors:
                 info = win32api.GetMonitorInfo(hMonitor)
-                # Opposite monitor is the non-primary one
-                if not (info.get("Flags", 0) & win32con.MONITORINFOF_PRIMARY):
-                    return rect[0], rect[1]
+                is_primary = info.get("Flags", 0) & win32con.MONITORINFOF_PRIMARY
+                if not is_primary:
+                    # Check if this might be a virtual display
+                    # Virtual displays from IddSampleDriver/VDD typically report
+                    # "\\Device\\0000XXXX" style device names or "IddSampleDriver" in the string
+                    device_name = info.get("Device", "")
+                    is_virtual = any(keyword in device_name.lower() for keyword in 
+                                     ["idd", "virtual", "rooted", "mirage"])
+                    
+                    if is_virtual:
+                        virtual_coords = (rect[0], rect[1])
+                    else:
+                        physical_coords = (rect[0], rect[1])
+            
+            # Prefer virtual display if VDD_PREFER is True and one was found
+            if VDD_PREFER and virtual_coords is not None:
+                return virtual_coords
+            elif physical_coords is not None:
+                return physical_coords
+            elif virtual_coords is not None:
+                return virtual_coords
     except Exception:
         pass
     return 0, 0
@@ -189,6 +211,52 @@ AUTO_ELEVATE = True       # If not running as admin, auto-relaunch with UAC prom
 # If clicks aren't registering (diff=0.0 in logs), set this to False.
 # The mouse will move for ~5 seconds per cycle, but clicks will work.
 HEADLESS = False
+
+# ──────────────────────────────────────────────
+#  Ghost Mode (Window Transparency)
+# ──────────────────────────────────────────────
+# When enabled, makes GnBots and LDPlayer windows fully transparent
+# (invisible) after the initial setup clicks are done. The windows
+# still exist and render normally — they're just not visible.
+#
+# REQUIRES: HEADLESS must be True for Ghost Mode to work properly,
+# since only PrintWindow can capture an invisible window, and only
+# PostMessage can click an invisible window.
+#
+# If HEADLESS is False, Ghost Mode is ignored with a warning.
+#
+# Transparency levels:
+#   0   = fully invisible (use this for "stealth" mode)
+#   1   = nearly invisible (just a faint outline, for debugging)
+#   255 = fully opaque (disables Ghost Mode)
+#
+# NOTE: PrintWindow with PW_RENDERFULLCONTENT captures the FULL
+# window content regardless of transparency. This has been verified
+# to work with GnBots' WinForms UI. If your capture_test.py shows
+# blank screenshots while Ghost Mode is on, set GHOST_ALPHA=1 instead
+# of 0 to keep a barely-visible window for debugging.
+GHOST_MODE = False
+GHOST_ALPHA = 0       # 0=invisible, 1=trace, 255=off. Ignored if GHOST_MODE=False
+
+# When to apply Ghost Mode:
+#   "after_start"  = Make invisible right after clicking Start (before popup)
+#   "after_enter"  = Make invisible after pressing Enter (final step)
+#   "after_move"   = Make invisible after moving to secondary monitor
+GHOST_WHEN = "after_enter"
+
+# ──────────────────────────────────────────────
+#  Virtual Display Detection
+# ──────────────────────────────────────────────
+# If you've installed a Virtual Display Driver (VDD) like
+# https://github.com/VirtualDrivers/Virtual-Display-Driver, the bot
+# can auto-detect the virtual monitor and move windows there instead
+# of a physical secondary monitor.
+#
+# Set VDD_PREFER=True to prefer a virtual display over a physical one.
+# Set VDD_PREFER=False to use physical monitors as before.
+#
+# If no virtual display is found, falls back to get_opposite_monitor_coords().
+VDD_PREFER = True
 
 # ──────────────────────────────────────────────
 #  Log Rotation

@@ -168,6 +168,57 @@ class WindowBot:
             )
             return False
 
+    # ── Ghost Mode (Window Transparency) ─────────────────────────
+
+    def make_transparent(self, alpha: int = 0) -> bool:
+        """Make the window transparent using SetLayeredWindowAttributes.
+        
+        Alpha values:
+            0   = fully invisible
+            1   = nearly invisible (faint outline, for debugging)
+            255 = fully opaque (restores normal visibility)
+        
+        Returns True on success, False on failure.
+        Requires admin privileges for elevated windows.
+        """
+        hwnd = self.hwnd
+        try:
+            import ctypes
+            
+            # Get current window style
+            style = ctypes.windll.user32.GetWindowLongW(hwnd, -20)  # GWL_EXSTYLE
+            
+            if alpha < 255:
+                # Add WS_EX_LAYERED flag
+                new_style = style | 0x80000  # WS_EX_LAYERED
+                ctypes.windll.user32.SetWindowLongW(hwnd, -20, new_style)
+                
+                # Set transparency: LWA_ALPHA = 0x02
+                result = ctypes.windll.user32.SetLayeredWindowAttributes(
+                    hwnd, 0, alpha, 0x02
+                )
+                if result:
+                    visibility = "invisible" if alpha == 0 else f"alpha={alpha}"
+                    logger.info(f"Ghost Mode: Window '{win32gui.GetWindowText(hwnd)}' is now {visibility}")
+                    return True
+                else:
+                    logger.error(f"SetLayeredWindowAttributes failed (error: {ctypes.GetLastError()})")
+                    return False
+            else:
+                # Remove WS_EX_LAYERED flag to restore normal window
+                new_style = style & ~0x80000
+                ctypes.windll.user32.SetWindowLongW(hwnd, -20, new_style)
+                logger.info(f"Ghost Mode: Window '{win32gui.GetWindowText(hwnd)}' restored to opaque")
+                return True
+                
+        except Exception as e:
+            logger.error(f"Ghost Mode failed: {e}")
+            return False
+
+    def make_opaque(self) -> bool:
+        """Restore the window to full visibility. Convenience wrapper for make_transparent(255)."""
+        return self.make_transparent(255)
+
     def bring_to_front(self) -> bool:
         """Attempt to bring the window to the foreground. Returns True on success."""
         hwnd = self.hwnd
