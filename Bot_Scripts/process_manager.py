@@ -14,6 +14,7 @@ import psutil
 from config import (
     GNBOTS_PATH,
     LDPLAYER_PATH,
+    LDMULTIPLAYER_PATH,
     KILL_TARGETS,
     LDPLAYER_TARGETS,
     KILL_EMULATOR_TOO,
@@ -24,6 +25,65 @@ from config import (
 )
 
 logger = logging.getLogger("FarmBot.ProcessManager")
+
+
+# ──────────────────────────────────────────────
+#  Shortcut Resolution
+# ──────────────────────────────────────────────
+
+def resolve_shortcut(path: Path) -> Path:
+    """Resolve a .lnk shortcut to its target executable path.
+
+    If the path is not a .lnk file, returns it unchanged.
+    If resolution fails, returns the original path and logs a warning.
+
+    Uses the WScript.Shell COM object (available via pywin32) to read
+    the shortcut's TargetPath. This handles both regular shortcuts
+    and shortcuts with "Run as administrator" flags.
+    """
+    if path.suffix.lower() != '.lnk':
+        return path
+
+    try:
+        import win32com.client
+        shell = win32com.client.Dispatch("WScript.Shell")
+        shortcut = shell.CreateShortCut(str(path))
+        target = shortcut.Targetpath
+        if target:
+            resolved = Path(target)
+            if resolved.exists():
+                logger.info(f"Resolved shortcut: {path} -> {resolved}")
+                return resolved
+            else:
+                logger.warning(
+                    f"Shortcut target does not exist: {path} -> {resolved}. "
+                    f"Falling back to original path."
+                )
+        else:
+            logger.warning(
+                f"Shortcut has no target: {path}. "
+                f"Falling back to original path."
+            )
+    except ImportError:
+        logger.warning(
+            f"win32com not available — cannot resolve shortcut: {path}. "
+            f"Install pywin32 or change config to use .exe paths directly."
+        )
+    except Exception as e:
+        logger.warning(f"Failed to resolve shortcut {path}: {e}. Falling back to original path.")
+
+    return path
+
+
+# Cache resolved paths so we only resolve once per session
+_resolved_cache: dict = {}
+
+
+def resolve_path(path: Path) -> Path:
+    """Resolve a shortcut path (with caching). Returns the real .exe path."""
+    if str(path) not in _resolved_cache:
+        _resolved_cache[str(path)] = resolve_shortcut(path)
+    return _resolved_cache[str(path)]
 
 
 def kill_all_targets() -> int:
@@ -92,16 +152,30 @@ def _force_kill(name: str) -> bool:
 
 
 def launch_gnbots() -> bool:
-    """Launch GnBots with admin elevation via ShellExecuteW. Returns True if confirmed running."""
+    """Launch GnBots with admin elevation via ShellExecuteW. Returns True if confirmed running.
+
+    If GNBOTS_PATH is a .lnk shortcut, resolves it to the real .exe first.
+    This ensures ShellExecuteW("runas") directly elevates the executable
+    (which is reliable) rather than trying to elevate through a shortcut
+    (which is unreliable across Windows versions).
+
+    The working directory is set to the resolved .exe's parent directory,
+    so GnBots can find its own resource files correctly.
+    """
     if not GNBOTS_PATH.exists():
         logger.error(f"GnBots not found at: {GNBOTS_PATH}")
         return False
 
-    logger.info(f"Launching (as admin): {GNBOTS_PATH}")
+    # Resolve .lnk -> .exe so we launch the real executable directly
+    exe_path = resolve_path(GNBOTS_PATH)
+    work_dir = str(exe_path.parent)
+
+    logger.info(f"Launching (as admin): {exe_path}  [original: {GNBOTS_PATH}]")
+    logger.info(f"Working directory: {work_dir}")
     try:
         result = ctypes.windll.shell32.ShellExecuteW(
-            None, "runas", str(GNBOTS_PATH), None,
-            str(GNBOTS_PATH.parent), 1
+            None, "runas", str(exe_path), None,
+            work_dir, 1
         )
         if result <= 32:
             logger.error(f"ShellExecuteW failed with code: {result}")
@@ -165,18 +239,29 @@ def check_ldplayer_alive() -> bool:
 
 
 def launch_ldplayer() -> bool:
-    """Launch LDPlayer emulator. Returns True if confirmed running."""
+    """Launch LDPlayer emulator. Returns True if confirmed running.
+
+    If LDPLAYER_PATH is a .lnk shortcut, resolves it to the real .exe first.
+    This ensures ShellExecuteW gets the actual executable with its correct
+    working directory, and command-line arguments (like index=) are passed
+    to the real .exe rather than silently ignored by the shortcut.
+    """
     if not LDPLAYER_PATH.exists():
         logger.error(f"LDPlayer not found at: {LDPLAYER_PATH}")
         return False
 
-    logger.info(f"Launching LDPlayer (instance {LDPLAYER_INSTANCE}): {LDPLAYER_PATH}")
+    # Resolve .lnk -> .exe so arguments reach the real executable
+    exe_path = resolve_path(LDPLAYER_PATH)
+    work_dir = str(exe_path.parent)
+
+    logger.info(f"Launching LDPlayer (instance {LDPLAYER_INSTANCE}): {exe_path}  [original: {LDPLAYER_PATH}]")
+    logger.info(f"Working directory: {work_dir}")
     try:
         # Launch with instance number via command line
         result = ctypes.windll.shell32.ShellExecuteW(
-            None, "open", str(LDPLAYER_PATH),
+            None, "open", str(exe_path),
             f"index={LDPLAYER_INSTANCE}",
-            str(LDPLAYER_PATH.parent), 1,
+            work_dir, 1,
         )
         if result <= 32:
             logger.error(f"ShellExecuteW failed for LDPlayer with code: {result}")

@@ -3,14 +3,14 @@
 # Paths are auto-detected relative to this script's location.
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$pythonExe = Join-Path (Split-Path -Parent $([System.Diagnostics.Process]::GetCurrentProcess().StartInfo.FileName)) "pythonw.exe"
-
-# Fallback: try to find pythonw.exe via the PATH
+$pythonExe = "C:\Users\kyleh\AppData\Local\Programs\Python\Python312\pythonw.exe"
+if (-not (Test-Path $pythonExe)) {
+    $pythonExe = "C:\Users\kyleh\scoop\apps\python\current\pythonw.exe"
+}
 if (-not (Test-Path $pythonExe)) {
     $pythonExe = (Get-Command pythonw.exe -ErrorAction SilentlyContinue).Source
 }
 if (-not $pythonExe) {
-    # Last resort: use python.exe
     $pythonExe = (Get-Command python.exe -ErrorAction SilentlyContinue).Source
 }
 

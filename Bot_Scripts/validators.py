@@ -22,6 +22,7 @@ from config import (
     NOTIFICATIONS,
     RUN_DURATION,
 )
+from process_manager import resolve_path
 
 logger = logging.getLogger("FarmBot.Validators")
 
@@ -34,11 +35,18 @@ def validate_all() -> list:
     issues = []
 
     # ── Application paths ──
+    # Check that the .lnk (or .exe) file exists
     if not GNBOTS_PATH.exists():
         issues.append(f"GnBots not found at: {GNBOTS_PATH}")
         logger.error(f"VALIDATION: GnBots not found at: {GNBOTS_PATH}")
     else:
-        logger.debug(f"VALIDATION: GnBots found at: {GNBOTS_PATH}")
+        # Also check that the resolved target exists (e.g. .lnk -> .exe)
+        resolved_gnbots = resolve_path(GNBOTS_PATH)
+        if not resolved_gnbots.exists():
+            issues.append(f"GnBots shortcut target does not exist: {GNBOTS_PATH} -> {resolved_gnbots}")
+            logger.error(f"VALIDATION: GnBots shortcut target missing: {resolved_gnbots}")
+        else:
+            logger.debug(f"VALIDATION: GnBots found at: {GNBOTS_PATH} -> {resolved_gnbots}")
 
     # LDPlayer is checked but only critical if KILL_EMULATOR_TOO is True
     # (since we need to restart it if we killed it)
@@ -49,6 +57,17 @@ def validate_all() -> list:
         else:
             issues.append(f"LDPlayer not found at: {LDPLAYER_PATH} (needed for auto-launch if not running)")
             logger.warning(f"VALIDATION: LDPlayer not found at: {LDPLAYER_PATH} — make sure it's running manually")
+    else:
+        # Also check that the resolved target exists
+        resolved_ldplayer = resolve_path(LDPLAYER_PATH)
+        if not resolved_ldplayer.exists():
+            if KILL_EMULATOR_TOO:
+                issues.append(f"LDPlayer shortcut target does not exist: {LDPLAYER_PATH} -> {resolved_ldplayer}")
+                logger.error(f"VALIDATION: LDPlayer shortcut target missing: {resolved_ldplayer}")
+            else:
+                logger.warning(f"VALIDATION: LDPlayer shortcut target missing: {resolved_ldplayer} — make sure it's running manually")
+        else:
+            logger.debug(f"VALIDATION: LDPlayer found at: {LDPLAYER_PATH} -> {resolved_ldplayer}")
 
     # ── Template files ──
     template_dir = Path(TEMPLATE_DIR)

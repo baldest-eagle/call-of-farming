@@ -3,6 +3,7 @@ import sys
 import os
 import subprocess
 from pathlib import Path
+from datetime import datetime
 
 def is_admin() -> bool:
     try:
@@ -44,8 +45,8 @@ def main():
         print(f"ERROR: farm_cycle.py not found at {script_path}")
         sys.exit(1)
     
-    # 3 hours interval
-    start_time = "16:20"
+    # 3 hours interval - set start_time to current time so repeating triggers start in 3 hours
+    start_time = datetime.now().strftime("%H:%M")
     
     # Build commands
     delete_cmd = 'schtasks /Delete /TN "FarmCycle" /F'
