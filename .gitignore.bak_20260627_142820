@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project-specific generated files
+Bot_Scripts/screenshots/
+Bot_Scripts/logs/
+Bot_Scripts/screenshots/diffs/
+
+# ChromaDB vector database (environment-specific, should be rebuilt)
+Bot_Scripts/knowledge/vector_db/
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Shortcuts (user-specific)
+*.lnk

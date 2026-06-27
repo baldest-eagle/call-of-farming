@@ -1,8 +1,15 @@
+# ──────────────────────────────────────────────────────────────
+#  Farm Bot — .gitignore
+# ──────────────────────────────────────────────────────────────
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.egg-info/
+dist/
+build/
 
 # Virtual environments
 .venv/
@@ -15,18 +22,28 @@ env/
 *.swp
 *.swo
 
-# Project-specific generated files
+# ── User-specific configuration (PRIVATE) ───────────────────
+# This file contains personal paths and webhook URLs.
+# Each user generates their own via setup_farm_bot.py.
+user_config.py
+
+# ── Project-generated files (created at runtime) ────────────
 Bot_Scripts/screenshots/
 Bot_Scripts/logs/
-Bot_Scripts/screenshots/diffs/
+screenshots/
+logs/
 
-# ChromaDB vector database (environment-specific, should be rebuilt)
+# ── ChromaDB vector database (environment-specific) ─────────
 Bot_Scripts/knowledge/vector_db/
+knowledge/vector_db/
 
-# OS files
+# ── OS files ─────────────────────────────────────────────────
 Thumbs.db
 .DS_Store
 desktop.ini
 
-# Shortcuts (user-specific)
+# ── Shortcuts (user-specific paths) ─────────────────────────
 *.lnk
+
+# ── Rainmeter (deprecated — not needed for bot operation) ───
+Rainmeter_Skin/
