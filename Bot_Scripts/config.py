@@ -23,9 +23,9 @@ except Exception:
 PROJECT_DIR = Path(__file__).resolve().parent
 
 # External application paths
-GNBOTS_PATH = Path(r"C:\Users\kyleh\Desktop\Gnbots_Assets_Copy\GnBots.lnk")
-LDPLAYER_PATH = Path(r"C:\Users\kyleh\Desktop\Gnbots_Assets_Copy\LDPlayer.lnk")
-LDMULTIPLAYER_PATH = Path(r"C:\Users\kyleh\Desktop\Gnbots_Assets_Copy\LDMultiPlayer.lnk")
+GNBOTS_PATH = Path(r"C:\Program Files\GnBots\GnBots.exe")
+LDPLAYER_PATH = Path(r"C:\LDPlayer\ldmutiplayer\LDPlayer32.exe")
+LDMULTIPLAYER_PATH = Path(r"C:\LDPlayer\ldmutiplayer\dnmultiplayerex.exe")
 
 # Project subdirectories
 TEMPLATE_DIR = PROJECT_DIR / "templates"
