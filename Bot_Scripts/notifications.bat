@@ -1,5 +1,7 @@
 @echo off
-:: reconfig.bat — Re-run just the configuration step.
+:: notifications.bat — Double-click to set up Discord/Slack notifications.
+:: Opens an interactive menu for enabling, disabling, testing, and
+:: configuring webhook notifications.
 
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
@@ -51,6 +53,8 @@ if not defined PYTHON (
     exit /b 1
 )
 
-echo Re-running configuration...
-"%PYTHON%" setup_farm_bot.py --reconfig
-pause
+"%PYTHON%" notifications.py
+
+if %errorLevel% neq 0 (
+    pause
+)

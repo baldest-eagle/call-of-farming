@@ -15,8 +15,8 @@
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/farm-bot.git
-cd farm-bot/Bot_Scripts
+git clone https://github.com/baldest-eagle/call-of-farming.git
+cd call-of-farming/Bot_Scripts
 ```
 
 ### 2. Double-click `setup.bat`
@@ -74,7 +74,11 @@ Double-click **`test.bat`** — runs all three diagnostic tests (capture, templa
 
 Double-click **`start.bat`** — runs one complete farm cycle.
 
-### 6. Set up auto-cycling (optional)
+### 6. Set up notifications (optional)
+
+Double-click **`notifications.bat`** — opens an interactive menu to set up Discord/Slack notifications. Includes step-by-step instructions for getting a webhook URL if you don't have one.
+
+### 7. Set up auto-cycling (optional)
 
 Double-click **`schedule.bat`** — creates a Windows Task Scheduler entry.
 
@@ -89,6 +93,7 @@ Double-click **`schedule.bat`** — creates a Windows Task Scheduler entry.
 | `stop.bat` | Kill all bot processes (GnBots, LDPlayer, Python) |
 | `test.bat` | Run all diagnostic tests with summary |
 | `capture.bat` | Open template capture GUI |
+| `notifications.bat` | Set up Discord/Slack notifications (with webhook instructions) |
 | `schedule.bat` | Set up Task Scheduler (self-elevates to admin) |
 | `reconfig.bat` | Re-run just the configuration step |
 
@@ -179,6 +184,51 @@ To reconfigure without redoing the full setup:
 - Double-click `reconfig.bat`, OR
 - Run: `python setup_farm_bot.py --reconfig`
 
+---
+
+## Notifications
+
+The Farm Bot can send notifications to Discord or Slack when farm cycles start, complete, or fail. This is ideal if you want to monitor the bot while away from your PC.
+
+### Easy way: use `notifications.bat`
+
+Double-click **`notifications.bat`** (or run `python notifications.py`). It opens an interactive menu:
+
+1. **Enable webhook notifications** — walks you through getting a webhook URL with step-by-step instructions (for both Discord and Slack), then sends a test message
+2. **Disable webhook notifications** — turns them off but keeps your URL saved for easy re-enabling
+3. **Test current webhook** — sends a test message to verify everything works
+4. **Choose which events trigger notifications** — toggle individual events on/off
+5. **Toggle desktop toast notifications** — Windows 10+ pop-up notifications
+6. **Show webhook setup instructions again** — if you need a refresher
+
+This tool only touches the `NOTIFICATIONS` section of `user_config.py` — your other settings are left untouched.
+
+### Manual way: edit `user_config.py`
+
+Open `user_config.py` in any text editor and modify the `NOTIFICATIONS` block:
+
+```python
+NOTIFICATIONS = {
+    "webhook_url": "https://discord.com/api/webhooks/YOUR_WEBHOOK",  # paste URL here
+    "webhook_enabled": True,       # True = on, False = off
+    "desktop_enabled": False,      # Windows toast pop-ups
+    "on_cycle_start": True,        # notify when cycle starts
+    "on_cycle_complete": True,     # notify when cycle finishes
+    "on_error": True,              # notify on errors
+    "on_health_fail": True,        # notify on health check failures
+    "on_completion_detected": True,
+    "sound_file": None,            # path to .wav for sound, or None
+}
+```
+
+Save the file. The next farm cycle picks up the new settings automatically.
+
+### What is a webhook?
+
+A webhook is a special URL that lets one app send messages to another. When the bot has something to tell you (cycle started, error occurred, etc.), it sends an HTTP POST to the webhook URL, and the message appears in your Discord/Slack channel.
+
+The `notifications.bat` tool includes full step-by-step instructions for creating a webhook in both Discord and Slack — you don't need to know what a webhook is in advance.
+
 ### Key settings
 
 | Setting | Default | What it does |
@@ -206,6 +256,19 @@ When you set up auto-cycling, you can choose:
 ---
 
 ## Troubleshooting
+
+### "internal error: no installs error: no runtimes are installed"
+This means you have the Python launcher (`py.exe`) installed but no actual Python runtime. The launcher is a stub that finds and runs Python — without Python installed, it errors out.
+
+**Fix:**
+1. Go to https://www.python.org/downloads/
+2. Download the latest Python 3.x installer
+3. Run the installer
+4. **Check the box that says "Add Python to PATH"** at the bottom of the installer
+5. Click "Install Now"
+6. Close any open Command Prompt windows, then double-click `setup.bat` again
+
+The .bat files now detect this case automatically and show the same instructions.
 
 ### "GnBots not found at: ..."
 Edit `user_config.py` and set `GNBOTS_PATH` to the correct location. Or run `reconfig.bat` to re-scan.
@@ -291,12 +354,14 @@ Bot_Scripts/
 ├── setup_farm_bot.py               # Setup script
 ├── test_setup.py                   # Diagnostic test suite
 ├── capture_templates.py            # Template capture GUI
+├── notifications.py                # Notification setup tool
 ├── requirements.txt                # Python dependencies
 ├── setup.bat                       # ← Double-click to setup
 ├── start.bat                       # ← Double-click to run
 ├── stop.bat                        # ← Double-click to stop
 ├── test.bat                        # ← Double-click to test
 ├── capture.bat                     # ← Double-click to capture templates
+├── notifications.bat               # ← Double-click to set up notifications
 ├── schedule.bat                    # ← Double-click to schedule
 └── reconfig.bat                    # ← Double-click to reconfigure
 ```

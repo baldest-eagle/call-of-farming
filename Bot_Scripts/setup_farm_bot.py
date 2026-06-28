@@ -1124,6 +1124,10 @@ def show_status_screen() -> None:
         cprint("  3. (Optional) Set up auto-cycling:", Colors.YELLOW)
         print("       Double-click schedule.bat")
         print("       (or: python schedule_tasks.py)")
+        print()
+        cprint("  4. (Optional) Set up notifications:", Colors.YELLOW)
+        print("       Double-click notifications.bat")
+        print("       (or: python notifications.py)")
 
     print()
     info(f"Setup log: {SETUP_LOG_FILE}")
