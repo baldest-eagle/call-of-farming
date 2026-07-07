@@ -393,8 +393,9 @@ def test_ghost_mode():
     print("\n[1/5] Capturing while visible...")
     visible_img = bot.capture_window_region()
     if visible_img is not None:
-        print(f"  Visible capture: {visible_img.shape[1]}x{visible_img.shape[0]}")
-        print(f"  Mean brightness: {visible_img.mean():.1f}")
+        print(f"  Visible capture: {visible_img.width}x{visible_img.height}")
+        from PIL import ImageStat
+        print(f"  Mean brightness: {ImageStat.Stat(visible_img.convert('L')).mean[0]:.1f}")
     else:
         print("  FAILED: Could not capture visible window")
 
@@ -416,20 +417,15 @@ def test_ghost_mode():
     bot.headless = original_headless
 
     if invisible_img is not None:
-        print(f"  Invisible capture: {invisible_img.shape[1]}x{invisible_img.shape[0]}")
-        print(f"  Mean brightness: {invisible_img.mean():.1f}")
-
+        print(f"  Invisible capture: {invisible_img.width}x{invisible_img.height}")
+        
         # Compare the captures
-        if visible_img is not None and visible_img.shape == invisible_img.shape:
-            import numpy as np
-            import cv2
-            diff = cv2.absdiff(
-                cv2.cvtColor(visible_img, cv2.COLOR_BGR2GRAY),
-                cv2.cvtColor(invisible_img, cv2.COLOR_BGR2GRAY)
-            )
-            mean_diff = float(np.mean(diff))
-            print(f"  Difference from visible: {mean_diff:.1f}")
-            if mean_diff < 5.0:
+        if visible_img is not None and visible_img.size == invisible_img.size:
+            from PIL import ImageChops
+            diff = ImageChops.difference(visible_img, invisible_img)
+            
+            # getbbox returns None if the image is completely black (no difference)
+            if diff.getbbox() is None:
                 print("  RESULT: PrintWindow captures are IDENTICAL — Ghost Mode works!")
             else:
                 print("  RESULT: Captures differ slightly — still usable, but check quality.")
@@ -447,12 +443,10 @@ def test_ghost_mode():
     screenshot_dir.mkdir(parents=True, exist_ok=True)
 
     if visible_img is not None:
-        import cv2
-        cv2.imwrite(str(screenshot_dir / "ghost_test_visible.png"), visible_img)
+        visible_img.save(str(screenshot_dir / "ghost_test_visible.png"))
         print(f"\n[5/5] Saved: ghost_test_visible.png")
     if invisible_img is not None:
-        import cv2
-        cv2.imwrite(str(screenshot_dir / "ghost_test_invisible.png"), invisible_img)
+        invisible_img.save(str(screenshot_dir / "ghost_test_invisible.png"))
         print(f"  Saved: ghost_test_invisible.png")
 
     print("\nGhost Mode test complete. Check the screenshots directory.")

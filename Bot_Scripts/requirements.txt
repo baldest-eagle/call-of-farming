@@ -5,10 +5,8 @@
 
 # ── Core ───────────────────────────────────────────────────
 psutil>=5.9.0,<7.0.0            # Process management (kill/launch GnBots, LDPlayer)
-opencv-python>=4.8.0,<5.0.0     # Template matching (find buttons on screen)
-numpy>=1.24.0,<3.0.0            # Image array operations (used by OpenCV + screenshot diffing)
 pyautogui>=0.9.54               # Mouse/keyboard automation (clicking, screenshots)
-Pillow>=10.0.0                  # Image handling (pyautogui dependency, explicit for clarity)
+Pillow>=10.0.0                  # Image handling (pyautogui dependency, used for basic screen capture)
 
 # ── Windows API ────────────────────────────────────────────
 pywin32>=306                    # win32gui, win32con, win32ui, win32api (window management, PostMessage clicks)
