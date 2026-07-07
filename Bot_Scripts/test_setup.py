@@ -82,10 +82,14 @@ def find_gnbots_window() -> bool:
 
     found = []
     def callback(hwnd, _):
-        if win32gui.IsWindowVisible(hwnd):
-            title = win32gui.GetWindowText(hwnd)
-            if "Goodnight Bots" in title:
-                found.append(hwnd)
+        try:
+            if win32gui.IsWindowVisible(hwnd):
+                title = win32gui.GetWindowText(hwnd)
+                if "Goodnight Bots" in title:
+                    found.append(hwnd)
+        except Exception:
+            pass
+        return True
     try:
         win32gui.EnumWindows(callback, None)
     except Exception:
@@ -399,7 +403,7 @@ def main():
         for test_name, key in [("Capture", "capture"), ("Templates", "templates"), ("Clicks", "clicks")]:
             output = all_results[key].get("output", "")
             if output and "PASS" not in output[:200]:
-                cprint(f"  ─── {test_name} Output ───", Colors.YELLOW)
+                cprint(f"  --- {test_name} Output ---", Colors.YELLOW)
                 for line in output.splitlines():
                     print(f"  {line}")
                 print()

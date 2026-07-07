@@ -36,12 +36,19 @@ def find_gnbots_window() -> int:
     results = []
 
     def callback(hwnd, _):
-        if win32gui.IsWindowVisible(hwnd):
-            title = win32gui.GetWindowText(hwnd)
-            if WINDOW_TITLE in title:
-                results.append(hwnd)
+        try:
+            if win32gui.IsWindowVisible(hwnd):
+                title = win32gui.GetWindowText(hwnd)
+                if WINDOW_TITLE in title:
+                    results.append(hwnd)
+        except Exception:
+            pass
+        return True
 
-    win32gui.EnumWindows(callback, None)
+    try:
+        win32gui.EnumWindows(callback, None)
+    except Exception:
+        pass
     return results[0] if results else None
 
 

@@ -103,12 +103,19 @@ def capture_gnbots_window() -> np.ndarray:
 
     def callback(hwnd, _):
         nonlocal found_hwnd
-        if win32gui.IsWindowVisible(hwnd):
-            title = win32gui.GetWindowText(hwnd)
-            if WINDOW_TITLE in title:
-                found_hwnd = hwnd
+        try:
+            if win32gui.IsWindowVisible(hwnd):
+                title = win32gui.GetWindowText(hwnd)
+                if WINDOW_TITLE in title:
+                    found_hwnd = hwnd
+        except Exception:
+            pass
+        return True
 
-    win32gui.EnumWindows(callback, None)
+    try:
+        win32gui.EnumWindows(callback, None)
+    except Exception:
+        pass
 
     if not found_hwnd:
         raise RuntimeError(

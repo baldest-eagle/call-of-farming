@@ -107,21 +107,25 @@ class WindowBot:
         search = partial_title.lower()
 
         def callback(hwnd, _):
-            if win32gui.IsWindowVisible(hwnd):
-                title = win32gui.GetWindowText(hwnd)
-                if search in title.lower():
-                    # Gather info to rank candidates
-                    try:
-                        rect = win32gui.GetWindowRect(hwnd)
-                        area = (rect[2] - rect[0]) * (rect[3] - rect[1])
-                        classname = win32gui.GetClassName(hwnd)
-                    except Exception:
-                        area = 0
-                        classname = ""
-                    # Skip tooltip and shadow windows — they're not the main window
-                    if any(cls in classname.lower() for cls in ["tooltip", "shadow", "broadcast"]):
-                        return
-                    results.append((hwnd, area, title))
+            try:
+                if win32gui.IsWindowVisible(hwnd):
+                    title = win32gui.GetWindowText(hwnd)
+                    if search in title.lower():
+                        # Gather info to rank candidates
+                        try:
+                            rect = win32gui.GetWindowRect(hwnd)
+                            area = (rect[2] - rect[0]) * (rect[3] - rect[1])
+                            classname = win32gui.GetClassName(hwnd)
+                        except Exception:
+                            area = 0
+                            classname = ""
+                        # Skip tooltip and shadow windows — they're not the main window
+                        if any(cls in classname.lower() for cls in ["tooltip", "shadow", "broadcast"]):
+                            return True
+                        results.append((hwnd, area, title))
+            except Exception:
+                pass
+            return True
 
         try:
             win32gui.EnumWindows(callback, None)
