@@ -59,9 +59,6 @@ class WindowBot:
         self.window_title = window_title
         self.headless = headless if headless is not None else HEADLESS
         self._hwnd: Optional[int] = None
-        self._template_cache: dict = {}
-        self._screenshot_dir = Path(SCREENSHOT_DIR)
-        self._diff_dir = Path(DIFF_DIR)
 
     # ── Window Finding & Management ──────────────────────────────
 
@@ -582,6 +579,34 @@ class WindowBot:
         except Exception as e:
             logger.debug(f"PostMessage click failed: {e}")
             return False
+
+    def send_key(self, vk_code: int) -> bool:
+        """
+        Send a keystroke to the window.
+        In HEADLESS mode: Uses PostMessage so it doesn't steal focus.
+        In NORMAL mode: Uses global keybd_event.
+        """
+        if self.headless:
+            try:
+                hwnd = self.hwnd
+                # WM_KEYDOWN = 0x0100, WM_KEYUP = 0x0101
+                windll.user32.PostMessageW(hwnd, win32con.WM_KEYDOWN, vk_code, 0)
+                time.sleep(0.05)
+                windll.user32.PostMessageW(hwnd, win32con.WM_KEYUP, vk_code, 0)
+                logger.debug(f"PostMessage keystroke 0x{vk_code:02X}")
+                return True
+            except Exception as e:
+                logger.debug(f"PostMessage keystroke failed: {e}")
+                return False
+        else:
+            import ctypes
+            # Global keybd_event
+            ctypes.windll.user32.keybd_event(vk_code, 0, 0, 0)
+            time.sleep(0.05)
+            # KEYEVENTF_KEYUP = 0x0002
+            ctypes.windll.user32.keybd_event(vk_code, 0, 0x0002, 0)
+            logger.debug(f"Global keystroke 0x{vk_code:02X}")
+            return True
 
     def click_at(self, x: int, y: int, description: str = "") -> None:
         """Click at absolute screen coordinates."""

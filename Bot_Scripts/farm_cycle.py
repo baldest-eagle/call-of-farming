@@ -10,18 +10,16 @@ Workflow (6 steps):
      (bypasses trial-end pop-up cascade entirely)
   2. Launch GnBots
   3. Find the GnBots window
-  4. Click Start (GnBots auto-launches LDPlayer)
-  5. Wait for popup, then press Enter to confirm 'First'
-  6. Move all windows to secondary monitor
-
-That's it — exit. GnBots handles the 2-hour farming run on its own.
-Task Scheduler triggers the next cycle, which kills everything and starts fresh.
+  4. Click Start
+     - Send Tab then Enter keystrokes to start farming.
+     - Optionally run in HEADLESS mode using PostMessage keystrokes.
+  5. Sleep for configured RUN_DURATION (default 2 hours).
+  6. Wake up, kill LDPlayer (optional) and GnBots, and loop back to step 1.
 
 Features:
   - Self-elevation: auto-relaunches as admin if needed (required for UIPI)
   - Log rotation: keeps 3x5MB rotating log files
   - Config validation: pre-flight checks before starting
-  - Screenshot differencing: before/after every click (via window_bot)
   - Webhook notifications: Discord/Slack alerts while you're away
 """
 
@@ -358,26 +356,24 @@ def run_cycle() -> bool:
                 "PrintWindow captures. Disabling Ghost Mode."
             )
         # First, ensure GnBots is in the foreground
-        if not bot.bring_to_front():
-            logger.warning("Failed to force GnBots to foreground! Keys may not register.")
+        if not HEADLESS:
+            if not bot.bring_to_front():
+                logger.warning("Failed to force GnBots to foreground! Keys may not register.")
+            time.sleep(1.0)
+        else:
+            logger.info("Running Headless — sending PostMessage keystrokes directly to window.")
         
-        # Give it a second to settle in foreground
-        time.sleep(1.0)
-        
-        # Send Tab
         VK_TAB = 0x09
         VK_RETURN = 0x0D
-        ctypes.windll.user32.keybd_event(VK_TAB, 0, 0, 0)
-        time.sleep(0.05)
-        ctypes.windll.user32.keybd_event(VK_TAB, 0, 0x0002, 0)
+
+        # Send Tab
+        bot.send_key(VK_TAB)
         logger.info("  Tab sent.")
         
         time.sleep(1.0)
         
         # Send Enter
-        ctypes.windll.user32.keybd_event(VK_RETURN, 0, 0, 0)
-        time.sleep(0.05)
-        ctypes.windll.user32.keybd_event(VK_RETURN, 0, 0x0002, 0)
+        bot.send_key(VK_RETURN)
         logger.info("  Enter sent. Start triggered.")
 
         bot.save_capture(f"{ts}_02_after_start.png", str(screenshot_dir))
