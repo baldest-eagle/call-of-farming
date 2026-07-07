@@ -50,9 +50,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import (
     GNBOTS_PATH,
     GNBOTS_TITLE,
-    TEMPLATE_DIR,
-    TEMPLATE_START,
-    TEMPLATE_CONTINUE,
+
     SCREENSHOT_DIR,
     LOG_FILE,
     MONITOR2_X,
@@ -336,7 +334,7 @@ def run_cycle() -> bool:
         logger.info("[STEP 3/6] Finding GnBots window...")
         bot = WindowBot(
             window_title=GNBOTS_TITLE,
-            template_dir=TEMPLATE_DIR,
+
         )
         if not bot.find_window(timeout=30):
             raise RuntimeError(f"Could not find window: '{GNBOTS_TITLE}'")

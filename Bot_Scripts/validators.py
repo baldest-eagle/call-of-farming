@@ -9,10 +9,6 @@ from pathlib import Path
 from config import (
     GNBOTS_PATH,
     LDPLAYER_PATH,
-    TEMPLATE_DIR,
-    TEMPLATE_START,
-    TEMPLATE_FIRST,
-    TEMPLATE_CONTINUE,
     SCREENSHOT_DIR,
     LOG_DIR,
     LOG_FILE,
@@ -69,31 +65,7 @@ def validate_all() -> list:
         else:
             logger.debug(f"VALIDATION: LDPlayer found at: {LDPLAYER_PATH} -> {resolved_ldplayer}")
 
-    # ── Template files ──
-    template_dir = Path(TEMPLATE_DIR)
-    if not template_dir.exists():
-        issues.append(f"Template directory does not exist: {TEMPLATE_DIR}")
-        logger.error(f"VALIDATION: Template dir missing: {TEMPLATE_DIR}")
-    else:
-        # TEMPLATE_FIRST is no longer required — the farm cycle presses Enter
-        # instead of clicking the First button. Kept as optional for diagnostic use.
-        required_templates = [TEMPLATE_START]
-        optional_templates = [TEMPLATE_FIRST, TEMPLATE_CONTINUE]
 
-        for tpl in required_templates:
-            tpl_path = template_dir / tpl
-            if not tpl_path.exists():
-                issues.append(f"Required template missing: {tpl}")
-                logger.error(f"VALIDATION: Missing template: {tpl}")
-            else:
-                logger.debug(f"VALIDATION: Template found: {tpl}")
-
-        for tpl in optional_templates:
-            tpl_path = template_dir / tpl
-            if not tpl_path.exists():
-                logger.info(f"VALIDATION: Optional template not found: {tpl} (non-critical)")
-            else:
-                logger.debug(f"VALIDATION: Optional template found: {tpl}")
 
     # ── Directory writability ──
     for dir_path, label in [

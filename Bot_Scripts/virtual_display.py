@@ -364,7 +364,7 @@ def print_parsec_status():
 def test_ghost_mode():
     """Test Ghost Mode by making GnBots invisible and verifying capture."""
     from window_bot import WindowBot
-    from config import GNBOTS_TITLE, TEMPLATE_DIR
+    from config import GNBOTS_TITLE
 
     print("\n" + "=" * 60)
     print("  GHOST MODE TEST")
@@ -380,7 +380,6 @@ def test_ghost_mode():
 
     bot = WindowBot(
         window_title=GNBOTS_TITLE,
-        template_dir=TEMPLATE_DIR,
     )
 
     if not bot.find_window(timeout=10):

@@ -22,11 +22,6 @@ import win32ui
 from ctypes import windll
 
 from config import (
-    TEMPLATE_DIR,
-    TEMPLATE_MATCH_THRESHOLD,
-    TEMPLATE_FALLBACK_THRESHOLD,
-    TEMPLATE_MULTI_SCALE,
-    TEMPLATE_SCALES,
     SCREENSHOT_DIR,
     DIFF_THRESHOLD,
     DIFF_SAVE_ALL,
@@ -59,19 +54,9 @@ class WindowBot:
     def __init__(
         self,
         window_title: str,
-        template_dir: Optional[Path] = None,
-        match_threshold: float = TEMPLATE_MATCH_THRESHOLD,
-        fallback_threshold: float = TEMPLATE_FALLBACK_THRESHOLD,
-        multi_scale: bool = TEMPLATE_MULTI_SCALE,
-        scales: Optional[List[float]] = None,
         headless: Optional[bool] = None,
     ):
         self.window_title = window_title
-        self.template_dir = Path(template_dir) if template_dir else TEMPLATE_DIR
-        self.threshold = match_threshold
-        self.fallback_threshold = fallback_threshold
-        self.multi_scale = multi_scale
-        self.scales = scales or TEMPLATE_SCALES
         self.headless = headless if headless is not None else HEADLESS
         self._hwnd: Optional[int] = None
         self._template_cache: dict = {}

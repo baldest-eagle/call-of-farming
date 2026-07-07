@@ -38,7 +38,7 @@ LDMULTIPLAYER_PATH = Path(r"C:\LDPlayer\LDPlayer9\dnmultiplayer.exe")
 
 
 # Project subdirectories
-TEMPLATE_DIR = PROJECT_DIR / "templates"
+
 SCREENSHOT_DIR = PROJECT_DIR / "screenshots"
 LOG_DIR = PROJECT_DIR / "logs"
 LOG_FILE = LOG_DIR / "FarmLog.txt"
@@ -120,13 +120,6 @@ DIALOG_WAIT = 5
 LDPLAYER_BOOT_WAIT = 45
 LDPLAYER_INSTANCE = 0
 
-# ──────────────────────────────────────────────
-#  Template Matching
-# ──────────────────────────────────────────────
-TEMPLATE_MATCH_THRESHOLD = 0.75
-TEMPLATE_FALLBACK_THRESHOLD = 0.60
-TEMPLATE_MULTI_SCALE = True
-TEMPLATE_SCALES = [0.75, 0.8, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3]
 
 # ──────────────────────────────────────────────
 #  Retry Settings
@@ -154,7 +147,7 @@ HEALTH_CHECK_METHOD = "process"
 HEALTH_CHECK_ON_FAIL = "kill_and_report"
 DETECT_COMPLETION = False
 COMPLETION_CHECK_INTERVAL = 120
-COMPLETION_TEMPLATE = TEMPLATE_COMPLETED
+COMPLETION_TEMPLATE = None
 COMPLETION_WINDOW_TITLE = None
 RUN_DURATION = 7200
 
