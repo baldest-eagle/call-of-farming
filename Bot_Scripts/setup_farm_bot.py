@@ -500,14 +500,14 @@ def auto_detect_ldplayer() -> tuple:
     dnplayer = find_existing_install(LDPLAYER_SEARCH_PATHS)
     if dnplayer:
         parent = Path(dnplayer).parent
-        ldmulti = parent / "LDMultiPlayer.exe"
+        ldmulti = parent / "dnmultiplayer.exe"
         return dnplayer, str(ldmulti) if ldmulti.exists() else ""
 
     # 2. Program Files
     result = search_program_files("dnplayer.exe")
     if result:
         parent = Path(result).parent
-        ldmulti = parent / "LDMultiPlayer.exe"
+        ldmulti = parent / "dnmultiplayer.exe"
         return result, str(ldmulti) if ldmulti.exists() else ""
 
     # 3. Desktop shortcuts
@@ -717,7 +717,7 @@ def install_software(non_interactive: bool = False) -> dict:
             if ldplayer_manual:
                 results["ldplayer_path"] = ldplayer_manual
                 parent = Path(ldplayer_manual).parent
-                ldmulti_guess = parent / "LDMultiPlayer.exe"
+                ldmulti_guess = parent / "dnmultiplayer.exe"
                 results["ldmulti_path"] = str(ldmulti_guess) if ldmulti_guess.exists() else ""
 
     return results
@@ -764,7 +764,7 @@ def generate_user_config(
     # Resolve paths
     gnbots_default = detected_paths.get("gnbots_path") or r"C:\Program Files\GnBots\GnBots.exe"
     ldplayer_default = detected_paths.get("ldplayer_path") or r"C:\LDPlayer\LDPlayer9\dnplayer.exe"
-    ldmulti_default = detected_paths.get("ldmulti_path") or r"C:\LDPlayer\LDPlayer9\LDMultiPlayer.exe"
+    ldmulti_default = detected_paths.get("ldmulti_path") or r"C:\LDPlayer\LDPlayer9\dnmultiplayer.exe"
 
     if non_interactive:
         gnbots_path = gnbots_default
@@ -890,7 +890,7 @@ from pathlib import Path
 # ── Application Paths ─────────────────────────────────────
 GNBOTS_PATH = Path(r"C:\\Path\\To\\GnBots.exe")        # TODO: Set your path
 LDPLAYER_PATH = Path(r"C:\\Path\\To\\dnplayer.exe")     # TODO: Set your path
-LDMULTIPLAYER_PATH = Path(r"C:\\Path\\To\\LDMultiPlayer.exe")  # TODO: Set your path
+LDMULTIPLAYER_PATH = Path(r"C:\\Path\\To\\dnmultiplayer.exe")  # TODO: Set your path
 
 # ── Notifications ─────────────────────────────────────────
 NOTIFICATIONS = {

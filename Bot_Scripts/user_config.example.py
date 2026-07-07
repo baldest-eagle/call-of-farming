@@ -15,7 +15,7 @@ from pathlib import Path
 # ── Application Paths ─────────────────────────────────────
 GNBOTS_PATH = Path(r"C:\Path\To\GnBots.exe")        # TODO: Set your path
 LDPLAYER_PATH = Path(r"C:\Path\To\dnplayer.exe")     # TODO: Set your path
-LDMULTIPLAYER_PATH = Path(r"C:\Path\To\LDMultiPlayer.exe")  # TODO: Set your path
+LDMULTIPLAYER_PATH = Path(r"C:\Path\To\dnmultiplayer.exe")  # TODO: Set your path
 
 # ── Notifications ─────────────────────────────────────────
 NOTIFICATIONS = {

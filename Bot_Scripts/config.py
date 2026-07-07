@@ -33,7 +33,7 @@ PROJECT_DIR = Path(__file__).resolve().parent
 # If user_config.py doesn't exist, these defaults will be used (and likely fail validation).
 GNBOTS_PATH = Path(r"C:\Program Files\GnBots\GnBots.exe")
 LDPLAYER_PATH = Path(r"C:\LDPlayer\LDPlayer9\dnplayer.exe")
-LDMULTIPLAYER_PATH = Path(r"C:\LDPlayer\LDPlayer9\LDMultiPlayer.exe")
+LDMULTIPLAYER_PATH = Path(r"C:\LDPlayer\LDPlayer9\dnmultiplayer.exe")
 
 
 
