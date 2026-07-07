@@ -1,6 +1,0 @@
-psutil
-opencv-python
-pyautogui
-pywin32
-numpy
-win10toast ; sys_platform == 'win32'

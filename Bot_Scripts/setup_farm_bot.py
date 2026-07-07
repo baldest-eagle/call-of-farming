@@ -1004,7 +1004,7 @@ def validate_setup() -> bool:
     # Key Python packages
     venv_python = VENV_DIR / "Scripts" / "python.exe"
     if venv_python.exists():
-        packages = ["psutil", "cv2", "pyautogui", "win32gui", "numpy"]
+        packages = ["psutil", "pyautogui", "win32gui", "PIL"]
         for pkg in packages:
             try:
                 result = subprocess.run(
