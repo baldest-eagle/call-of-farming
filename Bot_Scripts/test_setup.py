@@ -249,7 +249,7 @@ def print_section(title: str, results: list) -> None:
             color = Colors.RED
         cprint(f"  {icon} {label}", color)
         if hint:
-            cprint(f"       → {hint}", Colors.YELLOW if status != "PASS" else Colors.RESET)
+            cprint(f"       -> {hint}", Colors.YELLOW if status != "PASS" else Colors.RESET)
 
 
 def print_summary(all_results: dict) -> bool:
@@ -315,10 +315,10 @@ def print_summary(all_results: dict) -> bool:
     print()
     print("=" * 60)
     if all_pass:
-        cprint("  ✓ ALL CHECKS PASSED — ready to farm!", Colors.BOLD + Colors.GREEN)
+        cprint("  [OK] ALL CHECKS PASSED - ready to farm!", Colors.BOLD + Colors.GREEN)
         cprint("  Run:  python farm_cycle.py  (or double-click start.bat)", Colors.GREEN)
     else:
-        cprint("  ✗ SOME CHECKS FAILED — see above", Colors.BOLD + Colors.RED)
+        cprint("  [ERROR] SOME CHECKS FAILED - see above", Colors.BOLD + Colors.RED)
         cprint("  Fix the [XX] items, then re-run this test.", Colors.RED)
     print("=" * 60)
 

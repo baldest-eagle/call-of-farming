@@ -42,6 +42,7 @@ import win32con
 import win32process
 import win32ui
 import psutil
+import json
 
 # Ensure project root is on the Python path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -68,6 +69,9 @@ from config import (
     GHOST_MODE,
     GHOST_ALPHA,
     GHOST_WHEN,
+    DETECT_COMPLETION,
+    COMPLETION_CHECK_INTERVAL,
+    RUN_DURATION,
 )
 from process_manager import (
     kill_all_targets,
@@ -429,10 +433,12 @@ def run_cycle() -> bool:
         logger.info("=" * 60)
         logger.info("  FARM CYCLE COMPLETE")
         logger.info(f"  Setup time: {elapsed}s")
-        logger.info("  GnBots is farming. Next cycle will clean up and restart.")
         logger.info("=" * 60)
 
         notify("cycle_complete", f"Setup done in {elapsed}s — GnBots is farming")
+
+        # ── Monitoring ──
+        monitor_run(logger, cycle_start)
         return True
 
     except Exception as e:
@@ -444,6 +450,96 @@ def run_cycle() -> bool:
         except Exception:
             pass
         return False
+
+
+def monitor_run(logger, cycle_start: float) -> None:
+    """
+    Monitor the GnBots log file to detect when one full round of all active accounts
+    is complete. Once completed, kills GnBots + emulator and exits.
+    """
+    if not DETECT_COMPLETION:
+        logger.info("Completion detection is disabled. Leaving GnBots to run.")
+        return
+
+    logger.info("Completion detection is enabled. Monitoring GnBots log for round completion...")
+    
+    # 1. Get active accounts from settings.json
+    active_accounts = []
+    settings_path = r"C:\Program Files\GnBots\profiles\settings.json"
+    if Path(settings_path).exists():
+        try:
+            with open(settings_path, 'r', encoding='utf-8') as f:
+                profiles = json.load(f)
+            for p in profiles:
+                if p.get("Active", False) and p.get("Name") and not p.get("Name").startswith("NewAccount"):
+                    active_accounts.append(p.get("Name"))
+        except Exception as e:
+            logger.error(f"Error loading active accounts: {e}")
+    if not active_accounts:
+        active_accounts = ["eagle", "eagltte", "guppy", "ttuna", "heron"]
+        
+    logger.info(f"Active accounts to monitor: {active_accounts}")
+    completed_accounts = set()
+    
+    # 2. Find the active log file
+    log_dir = Path(r"C:\Program Files\GnBots\logs")
+    current_log = None
+    
+    # Try to find the log file created or modified recently
+    for attempt in range(10):
+        script_logs = list(log_dir.glob("script*.txt"))
+        if script_logs:
+            newest_log = max(script_logs, key=lambda p: p.stat().st_mtime)
+            # If modified in the last 120 seconds, it's our active log
+            if time.time() - newest_log.stat().st_mtime < 120:
+                current_log = newest_log
+                break
+        time.sleep(2)
+        
+    if not current_log:
+        logger.warning("Could not identify the active GnBots script log file. Exiting monitor.")
+        return
+        
+    logger.info(f"Found active script log: {current_log.name}")
+    last_position = 0
+    
+    while True:
+        # Check timeout
+        elapsed = time.time() - cycle_start
+        if elapsed > RUN_DURATION:
+            logger.warning(f"Run duration threshold exceeded ({RUN_DURATION}s). Terminating run...")
+            kill_all_targets()
+            notify("error", f"Farm run timed out after {RUN_DURATION}s.")
+            break
+            
+        # Read new log lines
+        if current_log.exists():
+            try:
+                with open(current_log, 'r', encoding='utf-8', errors='ignore') as f:
+                    f.seek(last_position)
+                    lines = f.readlines()
+                    last_position = f.tell()
+                    
+                for line in lines:
+                    # Logs match "Account [name] Done" or similar patterns
+                    if "Account Done" in line or ("Account " in line and " Done" in line):
+                        for acc in active_accounts:
+                            if f"Account {acc} Done" in line or f"Account {acc} finished" in line or (f"Account" in line and acc in line and "Done" in line):
+                                if acc not in completed_accounts:
+                                    completed_accounts.add(acc)
+                                    logger.info(f"Detected completion for account: {acc} ({len(completed_accounts)}/{len(active_accounts)})")
+            except Exception as e:
+                logger.error(f"Error reading GnBots log: {e}")
+                
+        # Check if all active accounts completed
+        if len(completed_accounts) >= len(active_accounts):
+            logger.info("All active accounts completed one full round. Stopping GnBots and LDPlayer...")
+            time.sleep(5)  # allow brief settle time
+            kill_all_targets()
+            notify("on_completion_detected", "All active accounts completed one full round. Farm cycle stopped.")
+            break
+            
+        time.sleep(COMPLETION_CHECK_INTERVAL)
 
 
 if __name__ == "__main__":

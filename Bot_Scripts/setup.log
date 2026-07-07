@@ -1,0 +1,286 @@
+
+============================================================
+Setup log — 2026-06-29T02:59:42.401027
+============================================================
+
+[1/8] Checking environment
+------------------------------------------------------------
+  [OK] Python 3.12.10
+  [OK] OS: Windows 11
+  [!!] Not running as admin — some features will be unavailable:
+    - Sending clicks to elevated windows
+    - Creating scheduled tasks with highest privileges
+
+[2/8] Setting up virtual environment
+------------------------------------------------------------
+  Creating virtual environment at: C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\.venv
+  [OK] Virtual environment created.
+
+[3/8] Installing dependencies
+------------------------------------------------------------
+  Installing dependencies from: C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\requirements.txt
+  [OK] Dependencies installed successfully.
+
+[4/8] Installing GnBots + LDPlayer
+------------------------------------------------------------
+
+  Checking for GnBots...
+  [OK] Found GnBots at: C:\Program Files\GnBots\GnBots.exe
+
+  Checking for LDPlayer...
+  [OK] Found LDPlayer at: C:\LDPlayer\LDPlayer9\dnplayer.exe
+
+[5/8] Creating directory structure
+------------------------------------------------------------
+  Creating project directories...
+    templates/  — already exists
+    screenshots/  — already exists
+    screenshots\diffs/  — already exists
+    logs/  — already exists
+
+[6/8] Configuring your setup
+------------------------------------------------------------
+  [OK] Wrote user_config.py to: C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\user_config.py
+  [OK] Wrote user_config.example.py (template for repo)
+
+[7/8] Validating setup
+------------------------------------------------------------
+  Running validation checks...
+
+  [OK] templates/
+  [OK] screenshots/
+  [OK] screenshots\diffs/
+  [OK] logs/
+  [OK] .venv/
+  [OK] psutil (installed)
+  [OK] cv2 (installed)
+  [OK] pyautogui (installed)
+  [OK] win32gui (installed)
+  [OK] numpy (installed)
+  [OK] user_config.py
+  [OK] GnBots at C:\Program Files\GnBots\GnBots.exe
+  [OK] LDPlayer at C:\LDPlayer\LDPlayer9\dnplayer.exe
+  [OK] templates/start_btn.png
+  [OK] templates/first_btn.png (optional)
+    continue_btn.png  — not found (optional)
+    stop_btn.png  — not found (optional)
+    completed.png  — not found (optional)
+
+  All validation checks PASSED!
+
+[8/8] Task Scheduler setup (optional)
+------------------------------------------------------------
+  Skipped (non-interactive mode).
+  Double-click schedule.bat to set up auto-cycling.
+
+============================================================
+  SETUP STATUS
+============================================================
+
+  [✓] Python environmentTraceback (most recent call last):
+  File "C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\setup_farm_bot.py", line 1409, in <module>
+    main()
+  File "C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\setup_farm_bot.py", line 1405, in main
+    show_status_screen()
+  File "C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\setup_farm_bot.py", line 1088, in show_status_screen
+    cprint(f"  [✓] {label}", Colors.GREEN)  File "C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\setup_farm_bot.py", line 115, in cprint
+    print(f"{color}{text}{Colors.RESET}", end=end)
+  File "C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\setup_farm_bot.py", line 164, in write
+    sys.__stdout__.write(text)
+  File "C:\Users\kyleh\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 8: character maps to <undefined>
+
+============================================================
+Setup log — 2026-06-29T03:01:34.053131
+============================================================
+
+[1/8] Checking environment
+------------------------------------------------------------
+  [OK] Python 3.12.10
+  [OK] OS: Windows 11
+  [!!] Not running as admin — some features will be unavailable:
+    - Sending clicks to elevated windows
+    - Creating scheduled tasks with highest privileges
+
+[2/8] Setting up virtual environment
+------------------------------------------------------------
+  Virtual environment already exists at: C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\.venv
+
+[3/8] Installing dependencies
+------------------------------------------------------------
+  Installing dependencies from: C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\requirements.txt
+  [OK] Dependencies installed successfully.
+
+[4/8] Installing GnBots + LDPlayer
+------------------------------------------------------------
+
+  Checking for GnBots...
+  [OK] Found GnBots at: C:\Program Files\GnBots\GnBots.exe
+
+  Checking for LDPlayer...
+  [OK] Found LDPlayer at: C:\LDPlayer\LDPlayer9\dnplayer.exe
+
+[5/8] Creating directory structure
+------------------------------------------------------------
+  Creating project directories...
+    templates/  — already exists
+    screenshots/  — already exists
+    screenshots\diffs/  — already exists
+    logs/  — already exists
+
+[6/8] Configuring your setup
+------------------------------------------------------------
+  [OK] Wrote user_config.py to: C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\user_config.py
+  [OK] Wrote user_config.example.py (template for repo)
+
+[7/8] Validating setup
+------------------------------------------------------------
+  Running validation checks...
+
+  [OK] templates/
+  [OK] screenshots/
+  [OK] screenshots\diffs/
+  [OK] logs/
+  [OK] .venv/
+  [OK] psutil (installed)
+  [OK] cv2 (installed)
+  [OK] pyautogui (installed)
+  [OK] win32gui (installed)
+  [OK] numpy (installed)
+  [OK] user_config.py
+  [OK] GnBots at C:\Program Files\GnBots\GnBots.exe
+  [OK] LDPlayer at C:\LDPlayer\LDPlayer9\dnplayer.exe
+  [OK] templates/start_btn.png
+  [OK] templates/first_btn.png (optional)
+    continue_btn.png  — not found (optional)
+    stop_btn.png  — not found (optional)
+    completed.png  — not found (optional)
+
+  All validation checks PASSED!
+
+[8/8] Task Scheduler setup (optional)
+------------------------------------------------------------
+  Skipped (non-interactive mode).
+  Double-click schedule.bat to set up auto-cycling.
+
+============================================================
+  SETUP STATUS
+============================================================
+
+Traceback (most recent call last):
+  File "C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\setup_farm_bot.py", line 1444, in <module>
+    main()
+  File "C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\setup_farm_bot.py", line 1427, in main
+    show_status_screen()
+  File "C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\setup_farm_bot.py", line 1103, in show_status_screen
+    check_char.encode(sys.stdout.encoding or "utf-8")
+                      ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'TeeWriter' object has no attribute 'encoding'
+
+============================================================
+Setup log — 2026-06-29T03:02:04.608314
+============================================================
+
+[1/8] Checking environment
+------------------------------------------------------------
+  [OK] Python 3.12.10
+  [OK] OS: Windows 11
+  [!!] Not running as admin — some features will be unavailable:
+    - Sending clicks to elevated windows
+    - Creating scheduled tasks with highest privileges
+
+[2/8] Setting up virtual environment
+------------------------------------------------------------
+  Virtual environment already exists at: C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\.venv
+
+[3/8] Installing dependencies
+------------------------------------------------------------
+  Installing dependencies from: C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\requirements.txt
+  [OK] Dependencies installed successfully.
+
+[4/8] Installing GnBots + LDPlayer
+------------------------------------------------------------
+
+  Checking for GnBots...
+  [OK] Found GnBots at: C:\Program Files\GnBots\GnBots.exe
+
+  Checking for LDPlayer...
+  [OK] Found LDPlayer at: C:\LDPlayer\LDPlayer9\dnplayer.exe
+
+[5/8] Creating directory structure
+------------------------------------------------------------
+  Creating project directories...
+    templates/  — already exists
+    screenshots/  — already exists
+    screenshots\diffs/  — already exists
+    logs/  — already exists
+
+[6/8] Configuring your setup
+------------------------------------------------------------
+  [OK] Wrote user_config.py to: C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\user_config.py
+  [OK] Wrote user_config.example.py (template for repo)
+
+[7/8] Validating setup
+------------------------------------------------------------
+  Running validation checks...
+
+  [OK] templates/
+  [OK] screenshots/
+  [OK] screenshots\diffs/
+  [OK] logs/
+  [OK] .venv/
+  [OK] psutil (installed)
+  [OK] cv2 (installed)
+  [OK] pyautogui (installed)
+  [OK] win32gui (installed)
+  [OK] numpy (installed)
+  [OK] user_config.py
+  [OK] GnBots at C:\Program Files\GnBots\GnBots.exe
+  [OK] LDPlayer at C:\LDPlayer\LDPlayer9\dnplayer.exe
+  [OK] templates/start_btn.png
+  [OK] templates/first_btn.png (optional)
+    continue_btn.png  — not found (optional)
+    stop_btn.png  — not found (optional)
+    completed.png  — not found (optional)
+
+  All validation checks PASSED!
+
+[8/8] Task Scheduler setup (optional)
+------------------------------------------------------------
+  Skipped (non-interactive mode).
+  Double-click schedule.bat to set up auto-cycling.
+
+============================================================
+  SETUP STATUS
+============================================================
+
+  [OK] Python environment
+  [OK] Dependencies installed
+  [OK] Directories created
+  [OK] user_config.py
+  [OK] templates/start_btn.png
+  [XX] Tested (run test_setup.py)
+
+  Next steps:
+
+  1. Test your setup:
+       Double-click test.bat
+       (or: python test_setup.py)
+
+  2. Run a farm cycle:
+       Double-click start.bat
+       (or: python farm_cycle.py)
+
+  3. (Optional) Set up auto-cycling:
+       Double-click schedule.bat
+       (or: python schedule_tasks.py)
+
+  4. (Optional) Set up notifications:
+       Double-click notifications.bat
+       (or: python notifications.py)
+
+  Setup log: C:\Users\kyleh\.gemini\projects\farm-bot\Bot_Scripts\setup.log
+  Edit user_config.py anytime to change settings.
+  Run 'python setup_farm_bot.py --check' to re-validate.

@@ -64,7 +64,7 @@ def main():
     create_cmd = (
         f'schtasks /Create /TN "FarmCycle" '
         f'/TR "{python_exe} {script_path}" '
-        f'/SC DAILY /ST {start_time} /RI 180 /DU 24:00 /RL HIGHEST /F'
+        f'/SC DAILY /ST {start_time} /RI 120 /DU 24:00 /RL HIGHEST /F'
     )
     
     # Delete old tasks if any
@@ -90,7 +90,7 @@ def main():
         create_cmd_fallback = (
             f'schtasks /Create /TN "FarmCycle" '
             f'/TR "{python_exe} {script_path}" '
-            f'/SC DAILY /ST {start_time} /RI 150 /DU 23:59 /RL HIGHEST /F'
+            f'/SC DAILY /ST {start_time} /RI 120 /DU 23:59 /RL HIGHEST /F'
         )
         res_fb = subprocess.run(create_cmd_fallback, shell=True, capture_output=True, text=True)
         print("Fallback STDOUT:")

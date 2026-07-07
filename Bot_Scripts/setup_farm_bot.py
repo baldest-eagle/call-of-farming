@@ -600,7 +600,7 @@ def install_gnbots() -> bool:
     print("    1. Log in or create a free account")
     print("    2. Download the PC version")
     print("    3. Install it (remember where it goes!)")
-    print("    4. Come back here and press Enter")
+    print("    4. I will automatically detect when it finishes installing.")
     print()
 
     want_open = ask_yes_no("Open GnBots download page in your browser?", default=True)
@@ -615,7 +615,20 @@ def install_gnbots() -> bool:
     else:
         print(f"  Download GnBots from: {GNBOTS_DOWNLOAD_PAGE}")
 
-    input("\n  Press Enter after you've installed GnBots...")
+    print("\n  Waiting for GnBots to be installed... (Press Ctrl+C to skip auto-detect)")
+    try:
+        import time
+        while True:
+            if auto_detect_gnbots():
+                print("\n")
+                ok("GnBots installation detected automatically!")
+                break
+            time.sleep(2)
+            sys.stdout.write(".")
+            sys.stdout.flush()
+    except KeyboardInterrupt:
+        print("\n  Skipped auto-detect.")
+
     return True
 
 
@@ -779,8 +792,12 @@ def generate_user_config(
         ldmulti_path = ask("LDMultiPlayer path", ldmulti_default)
 
         print()
-        print("  Want Discord/Slack notifications? (optional)")
-        webhook_url = ask("Webhook URL (leave blank to skip)", "")
+        cprint("  Want Discord/Slack notifications? (optional)", Colors.BOLD)
+        print("  To get a Discord Webhook URL:")
+        print("    1. Go to your Discord server settings > Integrations > Webhooks")
+        print("    2. Click 'New Webhook', then 'Copy Webhook URL'")
+        print("    3. Paste it below (or leave blank to skip)")
+        webhook_url = ask("Webhook URL", "")
         webhook_enabled = bool(webhook_url)
 
     # ── Build the config file ──
@@ -1083,11 +1100,20 @@ def show_status_screen() -> None:
         ("Tested (run test_setup.py)", (PROJECT_DIR / "logs" / ".tested").exists()),
     ]
 
+    # Safe checkmark rendering for Windows cp1252 consoles
+    try:
+        check_char = "✓"
+        cross_char = "✗"
+        check_char.encode(sys.__stdout__.encoding or "utf-8")
+    except UnicodeEncodeError:
+        check_char = "OK"
+        cross_char = "XX"
+
     for label, passed in checks:
         if passed:
-            cprint(f"  [✓] {label}", Colors.GREEN)
+            cprint(f"  [{check_char}] {label}", Colors.GREEN)
         else:
-            cprint(f"  [✗] {label}", Colors.RED)
+            cprint(f"  [{cross_char}] {label}", Colors.RED)
 
     print()
     cprint("  Next steps:", Colors.BOLD)
@@ -1403,6 +1429,19 @@ def main():
 
     # ── Final status screen ──
     show_status_screen()
+
+    # ── Auto-Launch Capture Tool ──
+    if not non_interactive and not (PROJECT_DIR / "templates" / "start_btn.png").exists():
+        print()
+        cprint("  [!!] Missing required templates.", Colors.YELLOW)
+        want_capture = ask_yes_no("Would you like to open the template capture tool now?", default=True)
+        if want_capture:
+            venv_python = VENV_DIR / "Scripts" / "python.exe"
+            capture_script = PROJECT_DIR / "capture_templates.py"
+            if venv_python.exists() and capture_script.exists():
+                info("Launching capture tool...")
+                subprocess.Popen([str(venv_python), str(capture_script)])
+                ok("Capture tool opened in a new window.")
 
 
 if __name__ == "__main__":
