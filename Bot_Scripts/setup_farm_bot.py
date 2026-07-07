@@ -1060,12 +1060,7 @@ def validate_setup() -> bool:
         issues.append("templates/start_btn.png is MISSING — the bot requires this!")
         err("templates/start_btn.png — MISSING (required!)")
 
-    for tpl in ["first_btn.png", "continue_btn.png", "stop_btn.png", "completed.png"]:
-        tpl_path = template_dir / tpl
-        if tpl_path.exists():
-            ok(f"templates/{tpl} (optional)")
-        else:
-            print(f"    {tpl}  — not found (optional)")
+
 
     # Summary
     print()
