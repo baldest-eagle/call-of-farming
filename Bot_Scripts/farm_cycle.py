@@ -48,6 +48,7 @@ import json
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from config import (
+    GNBOTS_PATH,
     GNBOTS_TITLE,
     TEMPLATE_DIR,
     TEMPLATE_START,
@@ -465,8 +466,8 @@ def monitor_run(logger, cycle_start: float) -> None:
     
     # 1. Get active accounts from settings.json
     active_accounts = []
-    settings_path = r"C:\Program Files\GnBots\profiles\settings.json"
-    if Path(settings_path).exists():
+    settings_path = Path(GNBOTS_PATH).parent / "profiles" / "settings.json"
+    if settings_path.exists():
         try:
             with open(settings_path, 'r', encoding='utf-8') as f:
                 profiles = json.load(f)
@@ -475,14 +476,16 @@ def monitor_run(logger, cycle_start: float) -> None:
                     active_accounts.append(p.get("Name"))
         except Exception as e:
             logger.error(f"Error loading active accounts: {e}")
+            
     if not active_accounts:
-        active_accounts = ["eagle", "eagltte", "guppy", "ttuna", "heron"]
+        logger.warning("No active accounts found in settings.json. Completion detection disabled.")
+        return
         
     logger.info(f"Active accounts to monitor: {active_accounts}")
     completed_accounts = set()
     
     # 2. Find the active log file
-    log_dir = Path(r"C:\Program Files\GnBots\logs")
+    log_dir = Path(GNBOTS_PATH).parent / "logs"
     current_log = None
     
     # Try to find the log file created or modified recently
