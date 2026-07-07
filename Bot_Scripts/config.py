@@ -63,14 +63,9 @@ LDPLAYER_TARGETS = [
 
 KILL_EMULATOR_TOO = True
 
-# ──────────────────────────────────────────────
-#  Template Filenames
-# ──────────────────────────────────────────────
-TEMPLATE_START = "start_btn.png"
-TEMPLATE_FIRST = "first_btn.png"
-TEMPLATE_CONTINUE = "continue_btn.png"
-TEMPLATE_STOP = "stop_btn.png"
-TEMPLATE_COMPLETED = "completed.png"
+# ──────────────────────────────────────────────────────────────
+#  Image Detection Overrides (No longer used, fully keyboard-driven)
+# ──────────────────────────────────────────────────────────────
 
 # ──────────────────────────────────────────────
 #  Second Monitor Position

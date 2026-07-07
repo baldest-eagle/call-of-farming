@@ -857,7 +857,7 @@ NOTIFICATIONS = {{
 # Use click_test.py --coords X Y to find values for your setup.
 # COORD_FALLBACK_ENABLED = True
 # COORD_FALLBACKS = {{
-#     "start_btn": None,
+
 #     "first_btn": None,
 #     "continue_btn": None,
 # }}
@@ -914,7 +914,7 @@ NOTIFICATIONS = {
 # VDD_PREFER = True
 # COORD_FALLBACK_ENABLED = True
 # COORD_FALLBACKS = {
-#     "start_btn": None,
+
 #     "first_btn": None,
 #     "continue_btn": None,
 # }
@@ -1051,14 +1051,7 @@ def validate_setup() -> bool:
         except Exception:
             pass
 
-    # Templates
-    template_dir = PROJECT_DIR / "templates"
-    start_btn = template_dir / "start_btn.png"
-    if start_btn.exists():
-        ok("templates/start_btn.png")
-    else:
-        issues.append("templates/start_btn.png is MISSING — the bot requires this!")
-        err("templates/start_btn.png — MISSING (required!)")
+
 
 
 
@@ -1091,7 +1084,7 @@ def show_status_screen() -> None:
         ("Dependencies installed", (VENV_DIR / "Scripts" / "python.exe").exists()),
         ("Directories created", all((PROJECT_DIR / d).exists() for d in DIRS_TO_CREATE)),
         ("user_config.py", USER_CONFIG_FILE.exists()),
-        ("templates/start_btn.png", (PROJECT_DIR / "templates" / "start_btn.png").exists()),
+
         ("Tested (run test_setup.py)", (PROJECT_DIR / "logs" / ".tested").exists()),
     ]
 
@@ -1115,7 +1108,7 @@ def show_status_screen() -> None:
     print()
 
     # Check what's missing and suggest next actions
-    has_templates = (PROJECT_DIR / "templates" / "start_btn.png").exists()
+    has_templates = True
     has_venv = VENV_DIR.exists()
 
     if not has_venv:
@@ -1424,20 +1417,5 @@ def main():
 
     # ── Final status screen ──
     show_status_screen()
-
-    # ── Auto-Launch Capture Tool ──
-    if not non_interactive and not (PROJECT_DIR / "templates" / "start_btn.png").exists():
-        print()
-        cprint("  [!!] Missing required templates.", Colors.YELLOW)
-        want_capture = ask_yes_no("Would you like to open the template capture tool now?", default=True)
-        if want_capture:
-            venv_python = VENV_DIR / "Scripts" / "python.exe"
-            capture_script = PROJECT_DIR / "capture_templates.py"
-            if venv_python.exists() and capture_script.exists():
-                info("Launching capture tool...")
-                subprocess.Popen([str(venv_python), str(capture_script)])
-                ok("Capture tool opened in a new window.")
-
-
 if __name__ == "__main__":
     main()

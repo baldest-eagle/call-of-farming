@@ -359,35 +359,28 @@ def run_cycle() -> bool:
                 "Ghost Mode requires HEADLESS=True for PostMessage clicks and "
                 "PrintWindow captures. Disabling Ghost Mode."
             )
-        # First, try to dismiss any "Continue" dialog if present
-        continue_template_path = Path(TEMPLATE_DIR) / TEMPLATE_CONTINUE
-        if continue_template_path.exists():
-            continue_clicked = bot.find_and_click(
-                TEMPLATE_CONTINUE,
-                click_delay=CLICK_DELAY,
-                retries=2,
-                retry_delay=2,
-                verify_click=False,
-            )
-            if continue_clicked:
-                logger.info("Dismissed 'Continue' dialog.")
-                time.sleep(DIALOG_WAIT)
-            else:
-                logger.info("No 'Continue' dialog found, proceeding.")
-        else:
-            logger.info("Optional 'Continue' template not found on disk, skipping check.")
-
-        if not bot.find_and_click(
-            TEMPLATE_START,
-            click_delay=CLICK_DELAY,
-            retries=MAX_RETRIES,
-            retry_delay=RETRY_DELAY,
-            verify_click=VERIFY_CLICK,
-        ):
-            bot.save_capture(f"{ts}_ERROR_start_not_found.png", str(screenshot_dir))
-            report = bot.get_template_confidence_report(TEMPLATE_START)
-            logger.error(f"Start button diagnostic: {report}")
-            raise RuntimeError("Failed to find and click the Start button!")
+        # First, ensure GnBots is in the foreground
+        if not bot.bring_to_front():
+            logger.warning("Failed to force GnBots to foreground! Keys may not register.")
+        
+        # Give it a second to settle in foreground
+        time.sleep(1.0)
+        
+        # Send Tab
+        VK_TAB = 0x09
+        VK_RETURN = 0x0D
+        ctypes.windll.user32.keybd_event(VK_TAB, 0, 0, 0)
+        time.sleep(0.05)
+        ctypes.windll.user32.keybd_event(VK_TAB, 0, 0x0002, 0)
+        logger.info("  Tab sent.")
+        
+        time.sleep(1.0)
+        
+        # Send Enter
+        ctypes.windll.user32.keybd_event(VK_RETURN, 0, 0, 0)
+        time.sleep(0.05)
+        ctypes.windll.user32.keybd_event(VK_RETURN, 0, 0x0002, 0)
+        logger.info("  Enter sent. Start triggered.")
 
         bot.save_capture(f"{ts}_02_after_start.png", str(screenshot_dir))
 
