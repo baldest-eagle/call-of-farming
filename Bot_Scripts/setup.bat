@@ -34,13 +34,8 @@ for %%c in (python py) do (
         :: Also check exit code — py.exe with no runtimes returns non-zero
         if not defined PYTHON (
             %%c --version >nul 2>&1
-            if !errorLevel! neq 0 (
-                :: This Python command is broken, skip it
-                goto :try_next_python
-            )
         )
     )
-    :try_next_python
 )
 
 :: Also try venv Python if it exists (created by a previous setup)
