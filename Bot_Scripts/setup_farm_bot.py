@@ -851,16 +851,6 @@ NOTIFICATIONS = {{
 # ── Virtual Display ──────────────────────────────────────
 # Set True to prefer virtual displays (Parsec VDD, etc.)
 # VDD_PREFER = True
-
-# ── Coordinate Fallbacks ─────────────────────────────────
-# If template matching fails, click these absolute screen coords.
-# Use click_test.py --coords X Y to find values for your setup.
-# COORD_FALLBACK_ENABLED = True
-# COORD_FALLBACKS = {{
-
-#     "first_btn": None,
-#     "continue_btn": None,
-# }}
 '''
 
     try:
@@ -912,12 +902,6 @@ NOTIFICATIONS = {
 # GHOST_MODE = False
 # GHOST_ALPHA = 0
 # VDD_PREFER = True
-# COORD_FALLBACK_ENABLED = True
-# COORD_FALLBACKS = {
-
-#     "first_btn": None,
-#     "continue_btn": None,
-# }
 '''
     example_path = PROJECT_DIR / "user_config.example.py"
     try:
@@ -1084,8 +1068,6 @@ def show_status_screen() -> None:
         ("Dependencies installed", (VENV_DIR / "Scripts" / "python.exe").exists()),
         ("Directories created", all((PROJECT_DIR / d).exists() for d in DIRS_TO_CREATE)),
         ("user_config.py", USER_CONFIG_FILE.exists()),
-
-        ("Tested (run test_setup.py)", (PROJECT_DIR / "logs" / ".tested").exists()),
     ]
 
     # Safe checkmark rendering for Windows cp1252 consoles
@@ -1107,39 +1089,21 @@ def show_status_screen() -> None:
     cprint("  Next steps:", Colors.BOLD)
     print()
 
-    # Check what's missing and suggest next actions
-    has_templates = True
     has_venv = VENV_DIR.exists()
 
     if not has_venv:
         cprint("  1. Run setup again:", Colors.YELLOW)
         print("       python setup_farm_bot.py")
-    elif not has_templates:
-        cprint("  1. Capture template images:", Colors.YELLOW)
-        print("       Double-click capture.bat")
-        print("       (or: python capture_templates.py)")
-        print()
-        cprint("  2. Test your setup:", Colors.YELLOW)
-        print("       Double-click test.bat")
-        print("       (or: python test_setup.py)")
-        print()
-        cprint("  3. Run a farm cycle:", Colors.YELLOW)
-        print("       Double-click start.bat")
-        print("       (or: python farm_cycle.py)")
     else:
-        cprint("  1. Test your setup:", Colors.YELLOW)
-        print("       Double-click test.bat")
-        print("       (or: python test_setup.py)")
-        print()
-        cprint("  2. Run a farm cycle:", Colors.YELLOW)
+        cprint("  1. Run a farm cycle:", Colors.YELLOW)
         print("       Double-click start.bat")
         print("       (or: python farm_cycle.py)")
         print()
-        cprint("  3. (Optional) Set up auto-cycling:", Colors.YELLOW)
+        cprint("  2. (Optional) Set up auto-cycling:", Colors.YELLOW)
         print("       Double-click schedule.bat")
         print("       (or: python schedule_tasks.py)")
         print()
-        cprint("  4. (Optional) Set up notifications:", Colors.YELLOW)
+        cprint("  3. (Optional) Set up notifications:", Colors.YELLOW)
         print("       Double-click notifications.bat")
         print("       (or: python notifications.py)")
 

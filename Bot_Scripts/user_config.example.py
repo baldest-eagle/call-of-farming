@@ -37,9 +37,3 @@ NOTIFICATIONS = {
 # GHOST_MODE = False
 # GHOST_ALPHA = 0
 # VDD_PREFER = True
-# COORD_FALLBACK_ENABLED = True
-# COORD_FALLBACKS = {
-#     "start_btn": None,
-#     "first_btn": None,
-#     "continue_btn": None,
-# }

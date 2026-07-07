@@ -62,7 +62,6 @@ from config import (
     LOG_MAX_BYTES,
     LOG_BACKUP_COUNT,
     HEADLESS,
-    VERIFY_CLICK,
     GHOST_MODE,
     GHOST_ALPHA,
     GHOST_WHEN,
@@ -297,7 +296,6 @@ def run_cycle() -> bool:
     logger.info(f"  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info(f"  Admin: {is_admin()}")
     logger.info(f"  Headless: {HEADLESS} ({'no mouse movement' if HEADLESS else 'mouse will move'})")
-    logger.info(f"  Verify clicks: {VERIFY_CLICK}")
     logger.info(f"  Ghost Mode: {GHOST_MODE} (alpha={GHOST_ALPHA}, when={GHOST_WHEN})")
     logger.info(f"  Target monitor: ({MONITOR2_X}, {MONITOR2_Y})")
     logger.info("=" * 60)

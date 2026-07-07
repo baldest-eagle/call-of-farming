@@ -128,18 +128,6 @@ MAX_RETRIES = 5
 RETRY_DELAY = 3
 
 # ──────────────────────────────────────────────
-#  Screenshot Differencing
-# ──────────────────────────────────────────────
-DIFF_THRESHOLD = 5.0
-DIFF_SAVE_ALL = True
-DIFF_DIR = SCREENSHOT_DIR / "diffs"
-
-# ──────────────────────────────────────────────
-#  Click Verification
-# ──────────────────────────────────────────────
-VERIFY_CLICK = False
-
-# ──────────────────────────────────────────────
 #  Monitoring
 # ──────────────────────────────────────────────
 HEALTH_CHECK_INTERVAL = 300
@@ -192,17 +180,6 @@ NOTIFICATIONS = {
     "on_health_fail": True,
     "on_completion_detected": True,
     "sound_file": None,
-}
-
-# ──────────────────────────────────────────────
-#  Coordinate Fallback
-# ──────────────────────────────────────────────
-COORD_FALLBACK_ENABLED = True
-
-COORD_FALLBACKS = {
-    "start_btn": None,
-    "first_btn": None,
-    "continue_btn": None,
 }
 
 # ──────────────────────────────────────────────

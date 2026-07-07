@@ -22,12 +22,6 @@ import win32ui
 from ctypes import windll
 
 from config import (
-    SCREENSHOT_DIR,
-    DIFF_THRESHOLD,
-    DIFF_SAVE_ALL,
-    DIFF_DIR,
-    COORD_FALLBACK_ENABLED,
-    COORD_FALLBACKS,
     HEADLESS,
 )
 
