@@ -392,10 +392,7 @@ def run_cycle() -> bool:
         time.sleep(3.0)
 
         logger.info("[STEP 5/6] Pressing Enter to confirm 'First'...")
-        VK_RETURN = 0x0D
-        ctypes.windll.user32.keybd_event(VK_RETURN, 0, 0, 0)       # key down
-        time.sleep(0.05)
-        ctypes.windll.user32.keybd_event(VK_RETURN, 0, 0x0002, 0)  # key up
+        bot.send_key(VK_RETURN)
         logger.info("  Enter sent. 'First' confirmed.")
 
         # Ghost Mode: apply after Enter (most common — all clicks done)
