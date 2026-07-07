@@ -1,12 +1,13 @@
 """
-window_bot.py — Window management, screenshot capture, and template-based clicking.
-Uses pywin32 for window control and OpenCV for template matching.
+window_bot.py — Window management, screenshot capture, and input dispatch.
+Uses pywin32 for window control and Pillow for screen capture.
 
-Key improvements over v2:
+Capabilities:
+  - Window finding by partial title match (with main-window ranking)
   - Dual capture: pyautogui (primary) + PrintWindow (fallback for obscured windows)
-  - Screenshot differencing: before/after every click to verify it landed
-  - Multi-scale template matching with configurable fallback threshold
-  - Robust click: PostMessage/SendMessage as fallback when pyautogui misses
+  - Click dispatch: Win32 SendInput (normal mode) or PostMessage (headless mode)
+  - Keystroke dispatch: global keybd_event (normal) or PostMessage WM_KEYDOWN/UP (headless)
+  - Ghost Mode: SetLayeredWindowAttributes to keep windows invisible while bot runs
 """
 
 import time
@@ -33,16 +34,17 @@ pyautogui.FAILSAFE = False
 
 
 class WindowBot:
-    """Manages a target window: finding, moving, capturing, and clicking via template matching.
+    """Manages a target window: finding, moving, capturing, and input dispatch.
 
     In HEADLESS mode (config.HEADLESS=True):
       - Uses PrintWindow for captures (no foreground needed)
-      - Uses PostMessage for clicks (no mouse movement)
+      - Uses PostMessage for clicks and keystrokes (no mouse movement, no focus theft)
       - Skips bring_to_front() so you can use your PC
     In normal mode:
-      - Uses pyautogui for captures and clicks (mouse moves)
-      - PostMessage sent as backup
-      - Brings window to front before clicks
+      - Uses pyautogui for captures (mouse moves)
+      - Uses Win32 SendInput for clicks (mouse moves), PostMessage as backup
+      - Uses global keybd_event for keystrokes
+      - Brings window to front before clicks/keys
     """
 
     def __init__(

@@ -10,11 +10,17 @@ Workflow (6 steps):
      (bypasses trial-end pop-up cascade entirely)
   2. Launch GnBots
   3. Find the GnBots window
-  4. Click Start
-     - Send Tab then Enter keystrokes to start farming.
-     - Optionally run in HEADLESS mode using PostMessage keystrokes.
-  5. Sleep for configured RUN_DURATION (default 2 hours).
-  6. Wake up, kill LDPlayer (optional) and GnBots, and loop back to step 1.
+  4. Send Tab + Enter keystrokes to trigger Start
+     - NORMAL mode: brings GnBots to foreground and uses global keybd_event
+     - HEADLESS mode: sends keys via PostMessage WM_KEYDOWN/UP (no focus theft)
+     GnBots then auto-launches LDPlayer.
+  5. Wait 3s for the 'First/Continue' popup to appear, then send Enter
+     to confirm 'First'. Same keybd_event / PostMessage split as step 4.
+  6. Move all project windows (GnBots, LDPlayer, game) to the secondary
+     monitor so they're out of the way, then call monitor_run() which
+     watches the GnBots log file until every active account completes
+     one full round (or RUN_DURATION elapses), at which point GnBots
+     and LDPlayer are killed.
 
 Features:
   - Self-elevation: auto-relaunches as admin if needed (required for UIPI)
