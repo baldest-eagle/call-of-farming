@@ -152,6 +152,34 @@ HEADLESS = False
 # ──────────────────────────────────────────────
 #  Ghost Mode (Window Transparency)
 # ──────────────────────────────────────────────
+# When GHOST_MODE=True and HEADLESS=True, all project windows
+# (GnBots, LDPlayer, the game) are made invisible via
+# SetLayeredWindowAttributes. They still render normally and
+# PrintWindow captures still work, so the bot runs unaffected —
+# the windows are just not visible on screen.
+#
+# GHOST_ALPHA controls visibility:
+#   0   = fully invisible (default; recommended once you trust it)
+#   1   = 1-pixel faint outline (useful for first-time testing —
+#         you can still see where the windows are)
+#   255 = fully opaque (same as GHOST_MODE=False)
+#
+# GHOST_WHEN controls WHEN ghosting engages during the cycle:
+#   "after_find"  — right after GnBots is found, before any keys.
+#                   Most aggressive. Only ghosts GnBots at first
+#                   (LDPlayer isn't running yet); subsequent steps
+#                   re-ghost to catch LDPlayer + game as they launch.
+#   "after_start" — after Step 4 (Tab+Enter sent to GnBots), before
+#                   the popup-confirm Enter. Ghosts GnBots + LDPlayer.
+#                   Risk: the popup's Enter hits an invisible window.
+#                   Usually fine (PostMessage routes to dialogs) but
+#                   not all apps handle it — test before trusting.
+#   "after_enter" — after Step 5 (popup confirmed). DEFAULT. Both
+#                   keyboard actions complete on a visible window,
+#                   then everything goes invisible. Safest option.
+#   "after_move"  — after Step 6 (windows moved to secondary monitor).
+#                   Least useful — windows are already off-screen on
+#                   the VDD, so ghosting on top of that adds little.
 GHOST_MODE = False
 GHOST_ALPHA = 0
 GHOST_WHEN = "after_enter"

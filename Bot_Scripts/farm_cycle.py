@@ -206,6 +206,20 @@ def ghost_all_project_windows(alpha: int = 0) -> None:
         logger.error(f"Error applying Ghost Mode: {e}")
 
 
+def restore_all_project_windows() -> None:
+    """Restore all project windows (GnBots, LDPlayer, game) to full visibility.
+    
+    Companion to ghost_all_project_windows(). Use as a safety net before
+    killing processes on cycle failure — if kill_all_targets() itself fails
+    or is interrupted, the user can at least see what's left running
+    instead of having invisible zombie windows lingering on the secondary
+    monitor.
+    """
+    logger = logging.getLogger("FarmBot")
+    # alpha=255 = fully opaque (restores normal visibility)
+    ghost_all_project_windows(alpha=255)
+
+
 # ──────────────────────────────────────────────────────────────
 #  Logging Setup (with rotation)
 # ──────────────────────────────────────────────────────────────
@@ -349,16 +363,33 @@ def run_cycle() -> bool:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         bot.save_capture(f"{ts}_01_main_screen.png", str(screenshot_dir))
 
+        # ── Resolve Ghost Mode ──────────────────────────────────
+        # Ghost Mode requires HEADLESS — PostMessage keystrokes still
+        # reach invisible windows, but global keybd_event doesn't, and
+        # pyautogui screenshots (used in NORMAL mode captures) capture
+        # what's behind an invisible window, not the window itself.
+        # If the user set GHOST_MODE=True without HEADLESS=True, warn
+        # and treat Ghost Mode as off for the rest of this cycle.
+        ghost_active = GHOST_MODE and HEADLESS
+        if GHOST_MODE and not HEADLESS:
+            logger.warning(
+                "Ghost Mode requires HEADLESS=True for PostMessage keystrokes "
+                "and PrintWindow captures. Disabling Ghost Mode for this cycle."
+            )
+
+        # Ghost Mode: apply as early as possible — right after the GnBots
+        # window is found and the initial diagnostic screenshot is taken.
+        # LDPlayer isn't running yet, so this only ghosts GnBots. The
+        # 'after_enter' / 'after_move' branches will catch LDPlayer and
+        # the game once they're launched.
+        if ghost_active and GHOST_WHEN == "after_find":
+            logger.info("[GHOST] Making GnBots invisible (after_find)...")
+            bot.make_transparent(GHOST_ALPHA)
+
         # ── STEP 4: Click Start ─────────────────────────────────
         # Click on the primary monitor where SendInput works reliably.
         logger.info("[STEP 4/6] Clicking Start button (also launches LDPlayer)...")
 
-        # Ghost Mode check: warn if enabled without headless
-        if GHOST_MODE and not HEADLESS:
-            logger.warning(
-                "Ghost Mode requires HEADLESS=True for PostMessage clicks and "
-                "PrintWindow captures. Disabling Ghost Mode."
-            )
         # First, ensure GnBots is in the foreground
         if not HEADLESS:
             if not bot.bring_to_front():
@@ -366,26 +397,28 @@ def run_cycle() -> bool:
             time.sleep(1.0)
         else:
             logger.info("Running Headless — sending PostMessage keystrokes directly to window.")
-        
+
         VK_TAB = 0x09
         VK_RETURN = 0x0D
 
         # Send Tab
         bot.send_key(VK_TAB)
         logger.info("  Tab sent.")
-        
+
         time.sleep(1.0)
-        
+
         # Send Enter
         bot.send_key(VK_RETURN)
         logger.info("  Enter sent. Start triggered.")
 
         bot.save_capture(f"{ts}_02_after_start.png", str(screenshot_dir))
 
-        # Ghost Mode: apply after Start click (before popup)
-        if GHOST_MODE and HEADLESS and GHOST_WHEN == "after_start":
-            logger.info("[GHOST] Making GnBots invisible (after_start)...")
-            bot.make_transparent(GHOST_ALPHA)
+        # Ghost Mode: apply after Start click (before popup). By this point
+        # LDPlayer is launching, so use ghost_all_project_windows() to catch
+        # both GnBots and LDPlayer (consistent with after_enter / after_move).
+        if ghost_active and GHOST_WHEN == "after_start":
+            logger.info("[GHOST] Making all project windows invisible (after_start)...")
+            ghost_all_project_windows(GHOST_ALPHA)
 
         # ── STEP 5: Wait for popup then press Enter ────────────
         # The popup "Start with first or continue" opens automatically and
@@ -400,7 +433,7 @@ def run_cycle() -> bool:
         logger.info("  Enter sent. 'First' confirmed.")
 
         # Ghost Mode: apply after Enter (most common — all clicks done)
-        if GHOST_MODE and HEADLESS and GHOST_WHEN == "after_enter":
+        if ghost_active and GHOST_WHEN == "after_enter":
             logger.info("[GHOST] Making all project windows invisible (after_enter)...")
             ghost_all_project_windows(GHOST_ALPHA)
 
@@ -410,7 +443,7 @@ def run_cycle() -> bool:
         move_all_project_windows(MONITOR2_X, MONITOR2_Y)
 
         # Ghost Mode: apply after moving (if configured)
-        if GHOST_MODE and HEADLESS and GHOST_WHEN == "after_move":
+        if ghost_active and GHOST_WHEN == "after_move":
             logger.info("[GHOST] Making all project windows invisible (after_move)...")
             ghost_all_project_windows(GHOST_ALPHA)
 
@@ -434,6 +467,17 @@ def run_cycle() -> bool:
         logger.critical(f"CYCLE FAILED: {e}")
         logger.critical(traceback.format_exc())
         notify("error", str(e))
+        # Safety net: if Ghost Mode was active when the cycle crashed, the
+        # GnBots/LDPlayer windows are still invisible. Restore them BEFORE
+        # kill_all_targets() so that if kill itself fails or is interrupted,
+        # the user can at least see what's still running and clean up manually
+        # instead of having invisible zombie windows on the secondary monitor.
+        if GHOST_MODE and HEADLESS:
+            try:
+                logger.info("[GHOST] Restoring window visibility before kill (cycle failed)...")
+                restore_all_project_windows()
+            except Exception as restore_err:
+                logger.warning(f"[GHOST] Restore failed: {restore_err}")
         try:
             kill_all_targets()
         except Exception:
