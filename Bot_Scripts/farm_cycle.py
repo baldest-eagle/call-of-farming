@@ -97,8 +97,8 @@ def move_all_project_windows(x: int, y: int) -> None:
     which can cause parent WinForms windows to reset or snap back to (0, 0)).
     """
     logger = logging.getLogger("FarmBot")
-    target_processes = ["gnbots.exe", "dnplayer.exe", "callofdragons.exe"]
-    target_titles = ["goodnight bots", "ldplayer", "call of dragons"]
+    target_processes = ["gnbots.exe", "dnplayer.exe"]
+    target_titles = ["goodnight bots", "ldplayer"]
 
     def move_window_to_coords(hwnd, tx, ty):
         try:
@@ -175,7 +175,7 @@ def ghost_all_project_windows(alpha: int = 0) -> None:
     PrintWindow captures still work at alpha=0.
     """
     logger = logging.getLogger("FarmBot")
-    target_processes = ["gnbots.exe", "dnplayer.exe", "callofdragons.exe"]
+    target_processes = ["gnbots.exe", "dnplayer.exe"]
     import ctypes
 
     def ghost_callback(hwnd, _):
