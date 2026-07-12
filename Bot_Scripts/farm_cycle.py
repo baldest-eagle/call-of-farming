@@ -127,8 +127,6 @@ def move_all_project_windows(x: int, y: int) -> None:
             # Fast path check: Class names that map directly to our target windows
             if classname == "LDPlayerMainFrame":
                 should_move = True
-            elif classname == "UnityWndClass":
-                should_move = True
             elif "WindowsForms10.Window" in classname and title:
                 should_move = True
             
